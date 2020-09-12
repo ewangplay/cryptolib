@@ -36,7 +36,7 @@ func GetCSP(cfg *Config) (CSP, error) {
 	case SWProvider:
 		csp, err = NewSWCSP()
 	default:
-		return nil, fmt.Errorf("unsupported %s provider", cfg.ProviderName)
+		return nil, fmt.Errorf("unsupported provider: %v", cfg.ProviderName)
 	}
 
 	if err != nil {
