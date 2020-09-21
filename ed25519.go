@@ -7,12 +7,12 @@ import (
 
 // Ed25519PublicKey represents the ed25519 public key
 type Ed25519PublicKey struct {
-	pubKey ed25519.PublicKey
+	PubKey ed25519.PublicKey
 }
 
 // Bytes converts this key to its byte representation.
 func (k *Ed25519PublicKey) Bytes() ([]byte, error) {
-	return k.pubKey, nil
+	return k.PubKey, nil
 }
 
 // Symmetric returns true if this key is a symmetric key,
@@ -35,12 +35,12 @@ func (k *Ed25519PublicKey) PublicKey() (Key, error) {
 
 // Ed25519PrivateKey represents the ed25519 private key
 type Ed25519PrivateKey struct {
-	privKey ed25519.PrivateKey
+	PrivKey ed25519.PrivateKey
 }
 
 // Bytes converts this key to its byte representation.
 func (k *Ed25519PrivateKey) Bytes() ([]byte, error) {
-	return k.privKey, nil
+	return k.PrivKey, nil
 }
 
 // Symmetric returns true if this key is a symmetric key,
@@ -58,14 +58,14 @@ func (k *Ed25519PrivateKey) Private() bool {
 // PublicKey returns the corresponding public key part of an asymmetric public/private key pair.
 // This method returns an error in symmetric key schemes.
 func (k *Ed25519PrivateKey) PublicKey() (Key, error) {
-	pubKey, ok := k.privKey.Public().(ed25519.PublicKey)
+	pubKey, ok := k.PrivKey.Public().(ed25519.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("key type mismatch")
 	}
 	return &Ed25519PublicKey{pubKey}, nil
 }
 
-type ed25519KeyGenerator struct {}
+type ed25519KeyGenerator struct{}
 
 // GenKey generates a key of ed25519 algorithm
 func (kg *ed25519KeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
@@ -74,11 +74,11 @@ func (kg *ed25519KeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 		return nil, fmt.Errorf("failed generating ED25519 key: %v", err)
 	}
 	return &Ed25519PrivateKey{
-		privKey: priKey,
+		PrivKey: priKey,
 	}, nil
 }
 
-type ed25519Signer struct {}
+type ed25519Signer struct{}
 
 // Sign signs digest using key k
 func (ed *ed25519Signer) Sign(k Key, digest []byte) (signature []byte, err error) {
@@ -95,7 +95,7 @@ func (ed *ed25519Signer) Sign(k Key, digest []byte) (signature []byte, err error
 	return ed25519.Sign(ed25519.PrivateKey(priKeyBytes), digest), nil
 }
 
-type ed25519Verifier struct {}
+type ed25519Verifier struct{}
 
 // Verify verifies signature against key k and digest
 func (ed *ed25519Verifier) Verify(k Key, digest, signature []byte) (valid bool, err error) {

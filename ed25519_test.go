@@ -13,7 +13,7 @@ func TestEd25519PrivateKey(t *testing.T) {
 	}
 
 	privKey := &Ed25519PrivateKey{
-		privKey: edPriKey,
+		PrivKey: edPriKey,
 	}
 
 	privKeyBytes, _ := privKey.Bytes()
@@ -55,7 +55,7 @@ func TestEd25519PublicKey(t *testing.T) {
 	}
 
 	pubKey := &Ed25519PublicKey{
-		pubKey: edPubKey,
+		PubKey: edPubKey,
 	}
 
 	pubKeyBytes, _ := pubKey.Bytes()
