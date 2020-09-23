@@ -2,6 +2,12 @@ package cryptohub
 
 // Key represents a cryptographic key
 type Key interface {
+	// Version returns the version of this key
+	Version() int
+
+	// Type returns the type of this key
+	Type() string
+
 	// Bytes converts this key to its byte representation,
 	// if this operation is allowed.
 	Bytes() ([]byte, error)

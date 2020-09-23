@@ -16,6 +16,14 @@ func TestEd25519PrivateKey(t *testing.T) {
 		PrivKey: edPriKey,
 	}
 
+	if privKey.Version() != ed25519V1 {
+		t.Fatalf("key version should be 1")
+	}
+
+	if privKey.Type() != ED25519 {
+		t.Fatalf("key type should be %v", ED25519)
+	}
+
 	privKeyBytes, _ := privKey.Bytes()
 	if !bytes.Equal(privKeyBytes, edPriKey) {
 		t.Fatalf("Priavte key bytes mismatch")
@@ -32,6 +40,14 @@ func TestEd25519PrivateKey(t *testing.T) {
 	pubKey, err := privKey.PublicKey()
 	if err != nil {
 		t.Fatalf("Get the public key of privKey failed: %v", err)
+	}
+
+	if pubKey.Version() != ed25519V1 {
+		t.Fatalf("key version should be 1")
+	}
+
+	if pubKey.Type() != ED25519 {
+		t.Fatalf("key type should be %v", ED25519)
 	}
 
 	pubKeyBytes, _ := pubKey.Bytes()
@@ -56,6 +72,14 @@ func TestEd25519PublicKey(t *testing.T) {
 
 	pubKey := &Ed25519PublicKey{
 		PubKey: edPubKey,
+	}
+
+	if pubKey.Version() != ed25519V1 {
+		t.Fatalf("key version should be 1")
+	}
+
+	if pubKey.Type() != ED25519 {
+		t.Fatalf("key type should be %v", ED25519)
 	}
 
 	pubKeyBytes, _ := pubKey.Bytes()

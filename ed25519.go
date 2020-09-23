@@ -5,9 +5,21 @@ import (
 	"fmt"
 )
 
+const ed25519V1 = 1
+
 // Ed25519PublicKey represents the ed25519 public key
 type Ed25519PublicKey struct {
 	PubKey ed25519.PublicKey
+}
+
+// Version returns the version of this key
+func (k *Ed25519PublicKey) Version() int {
+	return ed25519V1
+}
+
+// Type returns the type of this key
+func (k *Ed25519PublicKey) Type() string {
+	return ED25519
 }
 
 // Bytes converts this key to its byte representation.
@@ -36,6 +48,16 @@ func (k *Ed25519PublicKey) PublicKey() (Key, error) {
 // Ed25519PrivateKey represents the ed25519 private key
 type Ed25519PrivateKey struct {
 	PrivKey ed25519.PrivateKey
+}
+
+// Version returns the version of this key
+func (k *Ed25519PrivateKey) Version() int {
+	return ed25519V1
+}
+
+// Type returns the type of this key
+func (k *Ed25519PrivateKey) Type() string {
+	return ED25519
 }
 
 // Bytes converts this key to its byte representation.
