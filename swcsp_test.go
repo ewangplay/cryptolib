@@ -1,6 +1,7 @@
 package cryptolib
 
 import (
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"strings"
@@ -471,4 +472,123 @@ func TestAddWrapperSucc(t *testing.T) {
 	if !found {
 		t.Fatalf("The mockVerifier should be found")
 	}
+}
+
+func TestHashWithMsgIsEmpty(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	_, err = csp.Hash(nil, &SHA256Opts{})
+	if err == nil {
+		t.Fatal("Hash should be failed when msg is nil")
+	}
+
+	errShouldContain(t, err, "msg must not be empty")
+}
+
+func TestHashWithOptsIsNil(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	_, err = csp.Hash(msg, nil)
+	if err == nil {
+		t.Fatal("Hash should be failed when opts is nil")
+	}
+
+	errShouldContain(t, err, "invalid opts. It must not be nil")
+}
+
+type mockHashOpts struct{}
+
+func (m *mockHashOpts) Algorithm() string {
+	return "mockHash"
+}
+
+func TestHashWithOptsTypeIsMismatch(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	_, err = csp.Hash(msg, &mockHashOpts{})
+	if err == nil {
+		t.Fatal("Hash should be failed when opts type is mismatched")
+	}
+
+	errShouldContain(t, err, "unsupported 'HashOpt' provided")
+}
+
+type mockHasher struct {
+}
+
+// Hash hashes messages msg using options opts.
+func (mh *mockHasher) Hash(msg []byte, opts HashOpts) (digest []byte, err error) {
+	return nil, fmt.Errorf("internal exception")
+}
+
+func TestHashFailed(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+	csp.AddWrapper(reflect.TypeOf(&mockHashOpts{}), &mockHasher{})
+
+	msg := []byte("hello,world")
+	_, err = csp.Hash(msg, &mockHashOpts{})
+	if err == nil {
+		t.Fatal("Hash should be failed when occuring internal exception")
+	}
+
+	errShouldContain(t, err, "failed hashing with opts")
+}
+
+func TestHashSuccWithSha256(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	fmt.Println("digest: ", hex.EncodeToString(digest))
+}
+
+func TestHashSuccWithSha384(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA384Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	fmt.Println("digest: ", hex.EncodeToString(digest))
+}
+
+func TestHashSuccWithSha512(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA512Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	fmt.Println("digest: ", hex.EncodeToString(digest))
 }

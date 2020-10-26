@@ -31,6 +31,13 @@ type KeyGenOpts interface {
 	Algorithm() string
 }
 
+// HashOpts contains options for hashing with a CSP.
+type HashOpts interface {
+
+	// Algorithm returns the hash algorithm identifier (to be used).
+	Algorithm() string
+}
+
 // KeyGenerator is a interface that provides key generation algorithms
 type KeyGenerator interface {
 	// KeyGen generates a key using opts.
@@ -54,12 +61,22 @@ type Verifier interface {
 	Verify(k Key, digest, signature []byte) (valid bool, err error)
 }
 
+// Hasher is a BCCSP-like interface that provides hash algorithms
+type Hasher interface {
+
+	// Hash hashes messages msg using options opts.
+	Hash(msg []byte, opts HashOpts) (hash []byte, err error)
+}
+
 // CSP is the cryptographic service provider that offers
 // the implementation of cryptographic standards and algorithms.
 type CSP interface {
 
 	// KeyGen generates a key using opts.
 	KeyGen(opts KeyGenOpts) (k Key, err error)
+
+	// Hash hashes messages msg using options opts.
+	Hash(msg []byte, opts HashOpts) (hash []byte, err error)
 
 	// Sign signs digest using key k.
 	//

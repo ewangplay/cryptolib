@@ -5,6 +5,7 @@ A common cryptographical library in Golang.
 ## Feature
 
 * Ed25519 signing / verifying algorithm.
+* SHA256 / SHA384 hashing algorithm.
 
 ## Usage
 

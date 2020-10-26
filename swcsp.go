@@ -1,6 +1,8 @@
 package cryptolib
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
 	"reflect"
 )
@@ -10,6 +12,7 @@ type SWCSP struct {
 	KeyGenerators map[reflect.Type]KeyGenerator
 	Signers       map[reflect.Type]Signer
 	Verifiers     map[reflect.Type]Verifier
+	Hashers       map[reflect.Type]Hasher
 }
 
 // NewSWCSP creates a SWCSP instance.
@@ -17,11 +20,13 @@ func NewSWCSP() (*SWCSP, error) {
 	signers := make(map[reflect.Type]Signer)
 	verifiers := make(map[reflect.Type]Verifier)
 	keyGenerators := make(map[reflect.Type]KeyGenerator)
+	hashers := make(map[reflect.Type]Hasher)
 
 	csp := &SWCSP{
 		KeyGenerators: keyGenerators,
 		Signers:       signers,
 		Verifiers:     verifiers,
+		Hashers:       hashers,
 	}
 
 	err := initSWCSP(csp)
@@ -103,6 +108,29 @@ func (csp *SWCSP) Verify(k Key, digest, signature []byte) (valid bool, err error
 	return
 }
 
+// Hash hashes messages msg using options opts.
+func (csp *SWCSP) Hash(msg []byte, opts HashOpts) (digest []byte, err error) {
+	// Validate arguments
+	if len(msg) == 0 {
+		return nil, fmt.Errorf("msg must not be empty")
+	}
+	if opts == nil {
+		return nil, fmt.Errorf("invalid opts. It must not be nil")
+	}
+
+	hasher, found := csp.Hashers[reflect.TypeOf(opts)]
+	if !found {
+		return nil, fmt.Errorf("unsupported 'HashOpt' provided [%v]", opts)
+	}
+
+	digest, err = hasher.Hash(msg, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed hashing with opts [%v]: %v", opts, err)
+	}
+
+	return
+}
+
 // AddWrapper binds the passed type to the passed wrapper.
 // Notice that that wrapper must be an instance of one of the following interfaces:
 // KeyGenerator, Signer, Verifier.
@@ -121,6 +149,8 @@ func (csp *SWCSP) AddWrapper(t reflect.Type, w interface{}) error {
 		csp.Signers[t] = dt
 	case Verifier:
 		csp.Verifiers[t] = dt
+	case Hasher:
+		csp.Hashers[t] = dt
 	default:
 		return fmt.Errorf("wrapper type not valid, must be on of: KeyGenerator, Signer, Verifier")
 	}
@@ -136,6 +166,11 @@ func initSWCSP(csp *SWCSP) error {
 
 	// Set the Verifiers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PublicKey{}), &ed25519Verifier{})
+
+	// Set the Hashers
+	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})
+	csp.AddWrapper(reflect.TypeOf(&SHA384Opts{}), &hasher{hash: sha512.New384})
+	csp.AddWrapper(reflect.TypeOf(&SHA512Opts{}), &hasher{hash: sha512.New})
 
 	return nil
 }
