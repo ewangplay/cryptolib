@@ -1,4 +1,4 @@
-package cryptohub
+package cryptolib
 
 import (
 	"fmt"

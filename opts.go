@@ -1,4 +1,4 @@
-package cryptohub
+package cryptolib
 
 const (
 	// ED25519 signatures are elliptic-curve signatures,

@@ -1,4 +1,4 @@
-# CryptoHub
+# cryptolib
 
 A common cryptographical library in Golang.
 
@@ -10,7 +10,7 @@ A common cryptographical library in Golang.
 
 Get package:
 ```
-go get github.com/ewangplay/cryptohub
+go get github.com/ewangplay/cryptolib
 ```
 
 A sample:
@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	ch "github.com/ewangplay/cryptohub"
+	ch "github.com/ewangplay/cryptolib"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-package cryptohub
+package cryptolib
 
 // Key represents a cryptographic key
 type Key interface {
