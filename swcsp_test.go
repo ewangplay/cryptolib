@@ -548,47 +548,59 @@ func TestHashFailed(t *testing.T) {
 	errShouldContain(t, err, "failed hashing with opts")
 }
 
-func TestHashSuccWithSha256(t *testing.T) {
+func ExampleHash_sha256() {
 	csp, err := NewSWCSP()
 	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
+		fmt.Printf("NewSWCSP failed: %v\n", err)
+		return
 	}
 
 	msg := []byte("hello,world")
 	digest, err := csp.Hash(msg, &SHA256Opts{})
 	if err != nil {
-		t.Fatalf("Hash failed %v", err)
+		fmt.Printf("Hash failed %v\n", err)
+		return
 	}
 
-	fmt.Println("digest: ", hex.EncodeToString(digest))
+	fmt.Println(hex.EncodeToString(digest))
+	// Output:
+	// 77df263f49123356d28a4a8715d25bf5b980beeeb503cab46ea61ac9f3320eda
 }
 
-func TestHashSuccWithSha384(t *testing.T) {
+func ExampleHash_sha384() {
 	csp, err := NewSWCSP()
 	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
+		fmt.Printf("NewSWCSP failed: %v\n", err)
+		return
 	}
 
 	msg := []byte("hello,world")
 	digest, err := csp.Hash(msg, &SHA384Opts{})
 	if err != nil {
-		t.Fatalf("Hash failed %v", err)
+		fmt.Printf("Hash failed %v\n", err)
+		return
 	}
 
-	fmt.Println("digest: ", hex.EncodeToString(digest))
+	fmt.Println(hex.EncodeToString(digest))
+	// Output:
+	// 892987556fb42d19ab3ad8eb42ebaff1bc738a52f0f3c5728aa1285596a88395b59cb6b8c4e63e5b8ed5a79e1664526c
 }
 
-func TestHashSuccWithSha512(t *testing.T) {
+func ExampleHash_sha512() {
 	csp, err := NewSWCSP()
 	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
+		fmt.Printf("NewSWCSP failed: %v\n", err)
+		return
 	}
 
 	msg := []byte("hello,world")
 	digest, err := csp.Hash(msg, &SHA512Opts{})
 	if err != nil {
-		t.Fatalf("Hash failed %v", err)
+		fmt.Printf("Hash failed %v\n", err)
+		return
 	}
 
-	fmt.Println("digest: ", hex.EncodeToString(digest))
+	fmt.Println(hex.EncodeToString(digest))
+	// Output:
+	// 2958f052052ce5c280fc1dcf97038c4f4bf36ca5bde0531567201b391d977db699c379b4d31c8b3dd75a407114104aecb84f8ca11cad67b33d865dd47a72dec3
 }

@@ -4,8 +4,9 @@ A common cryptographical library in Golang.
 
 ## Feature
 
-* Ed25519 signing / verifying algorithm.
-* SHA256 / SHA384 hashing algorithm.
+* SHA2-256 / SHA2-384 / SHA2-512 hashing algorithm.
+* Generating Ed25519 key pair.
+* Signing & verifying signature using Ed25519 algorithm.
 
 ## Usage
 
@@ -14,7 +15,40 @@ Get package:
 go get github.com/ewangplay/cryptolib
 ```
 
-A sample:
+### Hashing sample
+
+```
+package main
+
+import (
+	"fmt"
+	"os"
+	"encoding/hex"
+
+	cl "github.com/ewangplay/cryptolib"
+)
+
+func main() {
+	cfg := &cl.Config{
+		ProviderName: "SW",
+	}
+	csp, err := cl.GetCSP(cfg)
+	if err != nil {
+		fmt.Printf("GetCSP failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		fmt.Printf("Hash failed %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(hex.EncodeToString(digest))
+```
+
+### Generating Ed25519 key pair, signing and verifying signature sample
+
 ```
 package main
 
@@ -22,20 +56,20 @@ import (
 	"fmt"
 	"os"
 
-	ch "github.com/ewangplay/cryptolib"
+	cl "github.com/ewangplay/cryptolib"
 )
 
 func main() {
-	cfg := &ch.Config{
+	cfg := &cl.Config{
 		ProviderName: "SW",
 	}
-	csp, err := ch.GetCSP(cfg)
+	csp, err := cl.GetCSP(cfg)
 	if err != nil {
-		fmt.Printf("Get default CSP failed: %v\n", err)
+		fmt.Printf("GetCSP failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	k, err := csp.KeyGen(&ch.ED25519KeyGenOpts{})
+	k, err := csp.KeyGen(&cl.ED25519KeyGenOpts{})
 	if err != nil {
 		fmt.Printf("KeyGen failed: %v\n", err)
 		os.Exit(1)
