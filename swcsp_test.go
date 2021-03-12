@@ -1,6 +1,7 @@
 package cryptolib
 
 import (
+	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -65,7 +66,7 @@ func TestKeyGenFailed(t *testing.T) {
 	errShouldContain(t, err, "failed generating key with opts")
 }
 
-func TestKeyGenSucc(t *testing.T) {
+func TestKeyGenSuccForED25519(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
@@ -79,6 +80,23 @@ func TestKeyGenSucc(t *testing.T) {
 	typeOf := reflect.TypeOf(k)
 	if typeOf != reflect.TypeOf(&Ed25519PrivateKey{}) {
 		t.Fatalf("Key returned by KeyGen should be Ed25519PrivateKey type")
+	}
+}
+
+func TestKeyGenSuccForECDSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&ECDSAKeyGenOpts{Curve: elliptic.P521()})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&EcdsaPrivateKey{}) {
+		t.Fatalf("Key returned by KeyGen should be EcdsaPrivateKey type")
 	}
 }
 
@@ -197,13 +215,30 @@ func TestSignFailed(t *testing.T) {
 	errShouldContain(t, err, "failed signing")
 }
 
-func TestSignSucc(t *testing.T) {
+func TestSignSuccForED25519(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
 	}
 
 	k, err := csp.KeyGen(&ED25519KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("Key generating failed: %v", err)
+	}
+
+	_, err = csp.Sign(k, []byte("hello,world"))
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+}
+
+func TestSignSuccForECDSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
 	if err != nil {
 		t.Fatalf("Key generating failed: %v", err)
 	}
@@ -362,13 +397,44 @@ func TestVerifyFailed(t *testing.T) {
 	errShouldContain(t, err, "failed verifing")
 }
 
-func TestVerifySucc(t *testing.T) {
+func TestVerifySuccForED25519(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
 	}
 
 	k, err := csp.KeyGen(&ED25519KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	digest := []byte("hello,world")
+	signature, err := csp.Sign(k, digest)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	valid, err := csp.Verify(pubKey, digest, signature)
+	if err != nil {
+		t.Fatalf("Verify failed: %v", err)
+	}
+	if !valid {
+		t.Fatalf("The signature should be validated")
+	}
+}
+
+func TestVerifySuccForECDSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
 	if err != nil {
 		t.Fatalf("KeyGen failed: %v", err)
 	}

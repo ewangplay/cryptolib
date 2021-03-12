@@ -160,12 +160,15 @@ func (csp *SWCSP) AddWrapper(t reflect.Type, w interface{}) error {
 func initSWCSP(csp *SWCSP) error {
 	// Set the key generators
 	csp.AddWrapper(reflect.TypeOf(&ED25519KeyGenOpts{}), &ed25519KeyGenerator{})
+	csp.AddWrapper(reflect.TypeOf(&ECDSAKeyGenOpts{}), &ecdsaKeyGenerator{})
 
 	// Set the Signers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PrivateKey{}), &ed25519Signer{})
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &ecdsaSigner{})
 
 	// Set the Verifiers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PublicKey{}), &ed25519Verifier{})
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaVerifier{})
 
 	// Set the Hashers
 	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})

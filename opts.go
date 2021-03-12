@@ -1,11 +1,16 @@
 package cryptolib
 
+import "crypto/elliptic"
+
 const (
 	// ED25519 signatures are elliptic-curve signatures,
 	// carefully engineered at several levels of design
 	// and implementation to achieve very high speeds
 	// without compromising security.
 	ED25519 = "ED25519"
+
+	// ECDSA is the Elliptic Curve Digital Signature Algorithm, as defined in FIPS 186-3.
+	ECDSA = "ECDSA"
 
 	// SHA256 hash algorithm
 	SHA256 = "SHA256"
@@ -21,9 +26,19 @@ const (
 type ED25519KeyGenOpts struct {
 }
 
-// Algorithm returns the key generation algorithm identifier (to be used).
+// Algorithm returns the key generation algorithm identifier for ED25519.
 func (opts *ED25519KeyGenOpts) Algorithm() string {
 	return ED25519
+}
+
+// ECDSAKeyGenOpts contains options for ECDSA key generation.
+type ECDSAKeyGenOpts struct {
+	Curve elliptic.Curve
+}
+
+// Algorithm returns the key generation algorithm identifier for ECDSA.
+func (opts *ECDSAKeyGenOpts) Algorithm() string {
+	return ECDSA
 }
 
 // SHA256Opts contains options relating to SHA-256.

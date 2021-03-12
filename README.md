@@ -5,8 +5,8 @@ A common cryptographical library in Golang.
 ## Feature
 
 * SHA2-256 / SHA2-384 / SHA2-512 hashing algorithm.
-* Generating Ed25519 key pair.
-* Signing & verifying signature using Ed25519 algorithm.
+* Generating Ed25519 / ECDSA key pair.
+* Signing & verifying signature using Ed25519 / ECDSA algorithm.
 
 ## Usage
 
