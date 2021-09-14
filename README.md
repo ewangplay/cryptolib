@@ -5,8 +5,8 @@ A common cryptographical library in Golang.
 ## Feature
 
 * SHA2-256 / SHA2-384 / SHA2-512 hashing algorithm.
-* Generating Ed25519 / ECDSA key pair.
-* Signing & verifying signature using Ed25519 / ECDSA algorithm.
+* Generating Ed25519 / ECDSA / RSA key pair.
+* Signing & verifying signature using Ed25519 / ECDSA / RSA algorithm.
 
 ## Usage
 
@@ -47,7 +47,7 @@ func main() {
 	fmt.Println(hex.EncodeToString(digest))
 ```
 
-### Generating Ed25519 key pair, signing and verifying signature sample
+### Generating keypair, signing and verifying signature sample
 
 ```
 package main
@@ -75,8 +75,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	digest := []byte("hello,world")
-	signature, err := csp.Sign(k, digest)
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		fmt.Printf("Hash failed %v\n", err)
+		os.Exit(1)
+
+	signature, err := csp.Sign(k, digest, nil)
 	if err != nil {
 		fmt.Printf("Sign failed: %v\n", err)
 		os.Exit(1)
@@ -88,7 +93,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	valid, err := csp.Verify(pubKey, digest, signature)
+	valid, err := csp.Verify(pubKey, digest, signature, nil)
 	if err != nil {
 		fmt.Printf("Verify failed: %v\n", err)
 		os.Exit(1)

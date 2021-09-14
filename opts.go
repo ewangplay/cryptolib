@@ -1,6 +1,9 @@
 package cryptolib
 
-import "crypto/elliptic"
+import (
+	"crypto"
+	"crypto/elliptic"
+)
 
 const (
 	// ED25519 signatures are elliptic-curve signatures,
@@ -11,6 +14,15 @@ const (
 
 	// ECDSA is the Elliptic Curve Digital Signature Algorithm, as defined in FIPS 186-3.
 	ECDSA = "ECDSA"
+
+	// RSA algorithm family.
+	RSA = "RSA"
+
+	// PKCS1V15 is the version 1 of RSA signature algorithm.
+	PKCS1V15 = "PKCS1V15"
+
+	// PSS is the version 2 of RSA signature algorithm, the Probabilistic Signature Scheme.
+	PSS = "PSS"
 
 	// SHA256 hash algorithm
 	SHA256 = "SHA256"
@@ -41,6 +53,16 @@ func (opts *ECDSAKeyGenOpts) Algorithm() string {
 	return ECDSA
 }
 
+// RSAKeyGenOpts contains options for RSA key generation.
+type RSAKeyGenOpts struct {
+	Bits int
+}
+
+// Algorithm returns the key generation algorithm identifier for RSA.
+func (opts *RSAKeyGenOpts) Algorithm() string {
+	return RSA
+}
+
 // SHA256Opts contains options relating to SHA-256.
 type SHA256Opts struct {
 }
@@ -66,4 +88,26 @@ type SHA512Opts struct {
 // Algorithm returns the hash algorithm identifier (to be used).
 func (opts *SHA512Opts) Algorithm() string {
 	return SHA512
+}
+
+// RSASignOpts contains options relating to PSS signing algorithm.
+type RSASignOpts struct {
+	Schema string
+	Hash   crypto.Hash
+}
+
+// Algorithm returns the RSA algorithm identifier (to be used).
+func (opts *RSASignOpts) Algorithm() string {
+	return RSA
+}
+
+// RSAVerifyOpts contains options relating to PKCS1V15 signing algorithm.
+type RSAVerifyOpts struct {
+	Schema string
+	Hash   crypto.Hash
+}
+
+// Algorithm returns the RSA algorithm identifier (to be used).
+func (opts *RSAVerifyOpts) Algorithm() string {
+	return RSA
 }

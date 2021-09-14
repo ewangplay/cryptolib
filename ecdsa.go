@@ -128,7 +128,7 @@ func (kg *ecdsaKeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 type ecdsaSigner struct{}
 
 // Sign signs digest using key k
-func (ed *ecdsaSigner) Sign(k Key, digest []byte) (signature []byte, err error) {
+func (ec *ecdsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("ECDSA signing error: %v", e)
@@ -154,7 +154,7 @@ func (ed *ecdsaSigner) Sign(k Key, digest []byte) (signature []byte, err error) 
 type ecdsaVerifier struct{}
 
 // Verify verifies signature against key k and digest
-func (ed *ecdsaVerifier) Verify(k Key, digest, signature []byte) (valid bool, err error) {
+func (ec *ecdsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("ECDSA verifying signature error: %v", e)

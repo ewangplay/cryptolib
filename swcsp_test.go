@@ -1,6 +1,7 @@
 package cryptolib
 
 import (
+	"crypto"
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
@@ -100,6 +101,40 @@ func TestKeyGenSuccForECDSA(t *testing.T) {
 	}
 }
 
+func TestKeyGenSuccForRSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&RsaPrivateKey{}) {
+		t.Fatalf("Key returned by KeyGen should be RsaPrivateKey type")
+	}
+}
+
+func TestKeyGenSuccForRSABits(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&RsaPrivateKey{}) {
+		t.Fatalf("Key returned by KeyGen should be RsaPrivateKey type")
+	}
+}
+
 func TestSignWithKeyIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
@@ -108,7 +143,7 @@ func TestSignWithKeyIsNil(t *testing.T) {
 
 	digest := []byte("hello,world")
 
-	_, err = csp.Sign(nil, digest)
+	_, err = csp.Sign(nil, digest, nil)
 	if err == nil {
 		t.Fatalf("Sign should be failed when key is nil")
 	}
@@ -127,9 +162,9 @@ func TestSignWithDigestIsEmpty(t *testing.T) {
 		t.Fatalf("Key generating failed: %v", err)
 	}
 
-	digests := [][]byte{nil, []byte{}}
+	digests := [][]byte{nil, {}}
 	for _, d := range digests {
-		_, err = csp.Sign(k, d)
+		_, err = csp.Sign(k, d, nil)
 		if err == nil {
 			t.Fatalf("Sign should be failed when digest is empty")
 		}
@@ -179,7 +214,7 @@ func TestSignWithKeyTypeMismatch(t *testing.T) {
 		t.Fatalf("NewSWCSP failed: %v", err)
 	}
 
-	_, err = csp.Sign(&mockPrivateKey{}, []byte("hello,world"))
+	_, err = csp.Sign(&mockPrivateKey{}, []byte("hello,world"), nil)
 	if err == nil {
 		t.Fatalf("Sign should be failed when key type is mismatched")
 	}
@@ -196,7 +231,7 @@ func errShouldContain(t *testing.T, err error, msg string) {
 type mockSigner struct{}
 
 // Sign signs digest using key k
-func (m *mockSigner) Sign(k Key, digest []byte) (signature []byte, err error) {
+func (m *mockSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
 	return nil, fmt.Errorf("internal exception")
 }
 
@@ -207,7 +242,7 @@ func TestSignFailed(t *testing.T) {
 	}
 	csp.AddWrapper(reflect.TypeOf(&mockPrivateKey{}), &mockSigner{})
 
-	_, err = csp.Sign(&mockPrivateKey{}, []byte("hello,world"))
+	_, err = csp.Sign(&mockPrivateKey{}, []byte("hello,world"), nil)
 	if err == nil {
 		t.Fatalf("Sign should be failed when occuring internal exception")
 	}
@@ -226,7 +261,7 @@ func TestSignSuccForED25519(t *testing.T) {
 		t.Fatalf("Key generating failed: %v", err)
 	}
 
-	_, err = csp.Sign(k, []byte("hello,world"))
+	_, err = csp.Sign(k, []byte("hello,world"), nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -243,7 +278,76 @@ func TestSignSuccForECDSA(t *testing.T) {
 		t.Fatalf("Key generating failed: %v", err)
 	}
 
-	_, err = csp.Sign(k, []byte("hello,world"))
+	_, err = csp.Sign(k, []byte("hello,world"), nil)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+}
+
+func TestSignSuccForRSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("Key generating failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	_, err = csp.Sign(k, digest, nil)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+}
+
+func TestSignSuccForRSAPSS(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("Key generating failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA384Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	_, err = csp.Sign(k, digest, &RSASignOpts{Schema: PSS, Hash: crypto.SHA384})
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+}
+
+func TestSignSuccForRSAPKCS1V15(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("Key generating failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA512Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	_, err = csp.Sign(k, digest, &RSASignOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -258,7 +362,7 @@ func TestVerifyWithKeyIsNil(t *testing.T) {
 	digest := []byte("hello,world")
 	signature := []byte("signature value")
 
-	_, err = csp.Verify(nil, digest, signature)
+	_, err = csp.Verify(nil, digest, signature, nil)
 	if err == nil {
 		t.Fatalf("Verify should be failed when key is nil")
 	}
@@ -281,10 +385,10 @@ func TestVerifyWithDigestIsEmpty(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	digests := [][]byte{nil, []byte{}}
+	digests := [][]byte{nil, {}}
 	signature := []byte("signature value")
 	for _, d := range digests {
-		_, err = csp.Verify(pubKey, d, signature)
+		_, err = csp.Verify(pubKey, d, signature, nil)
 		if err == nil {
 			t.Fatalf("Verify should be failed when digest is empty")
 		}
@@ -309,9 +413,9 @@ func TestVerifyWithSignatureIsEmpty(t *testing.T) {
 	}
 
 	digest := []byte("hello,world")
-	signatures := [][]byte{nil, []byte{}}
+	signatures := [][]byte{nil, {}}
 	for _, s := range signatures {
-		_, err = csp.Verify(pubKey, digest, s)
+		_, err = csp.Verify(pubKey, digest, s, nil)
 		if err == nil {
 			t.Fatalf("Verify should be failed when signature is empty")
 		}
@@ -329,7 +433,7 @@ func TestVerifyWithKeyTypeMismatch(t *testing.T) {
 	digest := []byte("hello,world")
 	signature := []byte("signature value")
 
-	_, err = csp.Verify(&mockPublicKey{}, digest, signature)
+	_, err = csp.Verify(&mockPublicKey{}, digest, signature, nil)
 	if err == nil {
 		t.Fatalf("Verify should be failed when key type is mismatched")
 	}
@@ -375,7 +479,7 @@ func (k *mockPublicKey) PublicKey() (Key, error) {
 type mockVerifier struct{}
 
 // Verify verifies signature against key k and digest
-func (m *mockVerifier) Verify(k Key, digest, signature []byte) (valid bool, err error) {
+func (m *mockVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
 	return false, fmt.Errorf("intertal exception")
 }
 
@@ -389,7 +493,7 @@ func TestVerifyFailed(t *testing.T) {
 	digest := []byte("hello,world")
 	signature := []byte("signature value")
 
-	_, err = csp.Verify(&mockPublicKey{}, digest, signature)
+	_, err = csp.Verify(&mockPublicKey{}, digest, signature, nil)
 	if err == nil {
 		t.Fatalf("Verify should be failed when key type is mismatched")
 	}
@@ -409,7 +513,7 @@ func TestVerifySuccForED25519(t *testing.T) {
 	}
 
 	digest := []byte("hello,world")
-	signature, err := csp.Sign(k, digest)
+	signature, err := csp.Sign(k, digest, nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -419,7 +523,7 @@ func TestVerifySuccForED25519(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	valid, err := csp.Verify(pubKey, digest, signature)
+	valid, err := csp.Verify(pubKey, digest, signature, nil)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -440,7 +544,7 @@ func TestVerifySuccForECDSA(t *testing.T) {
 	}
 
 	digest := []byte("hello,world")
-	signature, err := csp.Sign(k, digest)
+	signature, err := csp.Sign(k, digest, nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -450,7 +554,115 @@ func TestVerifySuccForECDSA(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	valid, err := csp.Verify(pubKey, digest, signature)
+	valid, err := csp.Verify(pubKey, digest, signature, nil)
+	if err != nil {
+		t.Fatalf("Verify failed: %v", err)
+	}
+	if !valid {
+		t.Fatalf("The signature should be validated")
+	}
+}
+
+func TestVerifySuccForRSA(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	signature, err := csp.Sign(k, digest, nil)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	valid, err := csp.Verify(pubKey, digest, signature, nil)
+	if err != nil {
+		t.Fatalf("Verify failed: %v", err)
+	}
+	if !valid {
+		t.Fatalf("The signature should be validated")
+	}
+}
+
+func TestVerifySuccForRSAPSS(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA384Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	signature, err := csp.Sign(k, digest, &RSASignOpts{Schema: PSS, Hash: crypto.SHA384})
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	valid, err := csp.Verify(pubKey, digest, signature, &RSAVerifyOpts{Schema: PSS, Hash: crypto.SHA384})
+	if err != nil {
+		t.Fatalf("Verify failed: %v", err)
+	}
+	if !valid {
+		t.Fatalf("The signature should be validated")
+	}
+}
+
+func TestVerifySuccForRSAPKCS1V15(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA512Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	signature, err := csp.Sign(k, digest, &RSASignOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	valid, err := csp.Verify(pubKey, digest, signature, &RSAVerifyOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}

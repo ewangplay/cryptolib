@@ -103,7 +103,7 @@ func (kg *ed25519KeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 type ed25519Signer struct{}
 
 // Sign signs digest using key k
-func (ed *ed25519Signer) Sign(k Key, digest []byte) (signature []byte, err error) {
+func (ed *ed25519Signer) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("ED25519 signing error: %v", e)
@@ -120,7 +120,7 @@ func (ed *ed25519Signer) Sign(k Key, digest []byte) (signature []byte, err error
 type ed25519Verifier struct{}
 
 // Verify verifies signature against key k and digest
-func (ed *ed25519Verifier) Verify(k Key, digest, signature []byte) (valid bool, err error) {
+func (ed *ed25519Verifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
 	pubKeyBytes, err := k.Bytes()
 	if err != nil {
 		return false, err

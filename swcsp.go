@@ -61,7 +61,7 @@ func (csp *SWCSP) KeyGen(opts KeyGenOpts) (k Key, err error) {
 // Note that when a signature of a hash of a larger message is needed,
 // the caller is responsible for hashing the larger message and passing
 // the hash (as digest).
-func (csp *SWCSP) Sign(k Key, digest []byte) (signature []byte, err error) {
+func (csp *SWCSP) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
 	if k == nil {
 		return nil, fmt.Errorf("invalid Key, it must not be nil")
 	}
@@ -75,7 +75,7 @@ func (csp *SWCSP) Sign(k Key, digest []byte) (signature []byte, err error) {
 		return nil, fmt.Errorf("unsupported 'SignKey' provided [%s]", keyType)
 	}
 
-	signature, err = signer.Sign(k, digest)
+	signature, err = signer.Sign(k, digest, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed signing: %v", err)
 	}
@@ -84,7 +84,7 @@ func (csp *SWCSP) Sign(k Key, digest []byte) (signature []byte, err error) {
 }
 
 // Verify verifies signature against key k and digest
-func (csp *SWCSP) Verify(k Key, digest, signature []byte) (valid bool, err error) {
+func (csp *SWCSP) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
 	if k == nil {
 		return false, fmt.Errorf("invalid Key, it must not be nil")
 	}
@@ -100,7 +100,7 @@ func (csp *SWCSP) Verify(k Key, digest, signature []byte) (valid bool, err error
 		return false, fmt.Errorf("unsupported 'VerifyKey' provided [%v]", k)
 	}
 
-	valid, err = verifier.Verify(k, digest, signature)
+	valid, err = verifier.Verify(k, digest, signature, opts)
 	if err != nil {
 		return false, fmt.Errorf("failed verifing: %v", err)
 	}
@@ -161,14 +161,17 @@ func initSWCSP(csp *SWCSP) error {
 	// Set the key generators
 	csp.AddWrapper(reflect.TypeOf(&ED25519KeyGenOpts{}), &ed25519KeyGenerator{})
 	csp.AddWrapper(reflect.TypeOf(&ECDSAKeyGenOpts{}), &ecdsaKeyGenerator{})
+	csp.AddWrapper(reflect.TypeOf(&RSAKeyGenOpts{}), &rsaKeyGenerator{})
 
 	// Set the Signers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PrivateKey{}), &ed25519Signer{})
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &ecdsaSigner{})
+	csp.AddWrapper(reflect.TypeOf(&RsaPrivateKey{}), &rsaSigner{})
 
 	// Set the Verifiers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PublicKey{}), &ed25519Verifier{})
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaVerifier{})
+	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaVerifier{})
 
 	// Set the Hashers
 	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})

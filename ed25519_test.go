@@ -123,7 +123,7 @@ func TestEd25519Signer(t *testing.T) {
 	}
 
 	digest := []byte("hello,world")
-	_, err = signer.Sign(k, digest)
+	_, err = signer.Sign(k, digest, nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -140,13 +140,13 @@ func TestEd25519Verifier(t *testing.T) {
 	}
 
 	digest := []byte("hello,world")
-	signature, err := signer.Sign(privKey, digest)
+	signature, err := signer.Sign(privKey, digest, nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
 
 	pubKey, _ := privKey.PublicKey()
-	valid, err := verifier.Verify(pubKey, digest, signature)
+	valid, err := verifier.Verify(pubKey, digest, signature, nil)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}

@@ -33,8 +33,19 @@ type KeyGenOpts interface {
 
 // HashOpts contains options for hashing with a CSP.
 type HashOpts interface {
-
 	// Algorithm returns the hash algorithm identifier (to be used).
+	Algorithm() string
+}
+
+// SignOpts contains options for signing with a CSP.
+type SignOpts interface {
+	// Algorithm returns the signing algorithm identifier (to be used).
+	Algorithm() string
+}
+
+// VerifyOpts contains options for signature verifing with a CSP.
+type VerifyOpts interface {
+	// Algorithm returns the signature verifing algorithm identifier (to be used).
 	Algorithm() string
 }
 
@@ -51,14 +62,13 @@ type Signer interface {
 	// Note that when a signature of a hash of a larger message is needed,
 	// the caller is responsible for hashing the larger message and passing
 	// the hash (as digest).
-	Sign(k Key, digest []byte) (signature []byte, err error)
+	Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error)
 }
 
 // Verifier is a interface that provides verifying algorithms
 type Verifier interface {
-
 	// Verify verifies signature against key k and digest
-	Verify(k Key, digest, signature []byte) (valid bool, err error)
+	Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error)
 }
 
 // Hasher is a BCCSP-like interface that provides hash algorithms
@@ -83,8 +93,8 @@ type CSP interface {
 	// Note that when a signature of a hash of a larger message is needed,
 	// the caller is responsible for hashing the larger message and passing
 	// the hash (as digest).
-	Sign(k Key, digest []byte) (signature []byte, err error)
+	Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error)
 
 	// Verify verifies signature against key k and digest
-	Verify(k Key, digest, signature []byte) (valid bool, err error)
+	Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error)
 }
