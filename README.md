@@ -4,9 +4,14 @@ A common cryptographical library in Golang.
 
 ## Feature
 
-* SHA2-256 / SHA2-384 / SHA2-512 hashing algorithm.
-* Generating Ed25519 / ECDSA / RSA key pair.
-* Signing & verifying signature using Ed25519 / ECDSA / RSA algorithm.
+* SHA2-256 / SHA2-384 / SHA2-512 hash algorithm.
+* Ed25519 / ECDSA / RSA key pair generating.
+* Ed25519 / ECDSA / RSA signature algorithm.
+
+## TODO
+
+* RSA encryption algorithm.
+* ECDSA encryption algorithm.
 
 ## Usage
 
