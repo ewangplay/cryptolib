@@ -174,3 +174,21 @@ func (ec *ecdsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts
 	valid = ecdsa.VerifyASN1(ecdsaPubKey, digest, signature)
 	return valid, nil
 }
+
+type ecdsaEncrypter struct{}
+
+// Encrypt encrypts plaintext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (ec *ecdsaEncrypter) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
+	err = fmt.Errorf("method is not implemented")
+	return
+}
+
+type ecdsaDecrypter struct{}
+
+// Decrypt decrypts ciphertext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (ec *ecdsaDecrypter) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
+	err = fmt.Errorf("method is not implemented")
+	return
+}

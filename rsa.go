@@ -242,3 +242,21 @@ func (rs *rsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) 
 
 	return valid, nil
 }
+
+type rsaEncrypter struct{}
+
+// Encrypt encrypts plaintext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (rs *rsaEncrypter) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
+	err = fmt.Errorf("method is not implemented")
+	return
+}
+
+type rsaDecrypter struct{}
+
+// Decrypt decrypts ciphertext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (rs *rsaDecrypter) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
+	err = fmt.Errorf("method is not implemented")
+	return
+}

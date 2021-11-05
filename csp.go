@@ -49,6 +49,12 @@ type VerifyOpts interface {
 	Algorithm() string
 }
 
+// EncryptOpts contains options for encrypting with a CSP.
+type EncryptOpts interface{}
+
+// DecryptOpts contains options for decrypting with a CSP.
+type DecryptOpts interface{}
+
 // KeyGenerator is a interface that provides key generation algorithms
 type KeyGenerator interface {
 	// KeyGen generates a key using opts.
@@ -78,6 +84,20 @@ type Hasher interface {
 	Hash(msg []byte, opts HashOpts) (hash []byte, err error)
 }
 
+// Encrypter is a interface that provides encrypting algorithms
+type Encrypter interface {
+	// Encrypt encrypts plaintext using key k.
+	// The opts argument should be appropriate for the algorithm used.
+	Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error)
+}
+
+// Decrypter is a interface that provides decrypting algorithms
+type Decrypter interface {
+	// Decrypt decrypts ciphertext using key k.
+	// The opts argument should be appropriate for the algorithm used.
+	Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error)
+}
+
 // CSP is the cryptographic service provider that offers
 // the implementation of cryptographic standards and algorithms.
 type CSP interface {
@@ -97,4 +117,12 @@ type CSP interface {
 
 	// Verify verifies signature against key k and digest
 	Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error)
+
+	// Encrypt encrypts plaintext using key k.
+	// The opts argument should be appropriate for the algorithm used.
+	Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error)
+
+	// Decrypt decrypts ciphertext using key k.
+	// The opts argument should be appropriate for the algorithm used.
+	Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error)
 }

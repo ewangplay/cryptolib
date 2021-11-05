@@ -1,6 +1,7 @@
 package cryptolib
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/elliptic"
 	"encoding/hex"
@@ -881,4 +882,68 @@ func ExampleHash_sha512() {
 	fmt.Println(hex.EncodeToString(digest))
 	// Output:
 	// 2958f052052ce5c280fc1dcf97038c4f4bf36ca5bde0531567201b391d977db699c379b4d31c8b3dd75a407114104aecb84f8ca11cad67b33d865dd47a72dec3
+}
+
+func TestEncryptAndDecryptForECDSA(t *testing.T) {
+	t.Skip()
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	pk, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, msg, nil)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	plaintext, err := csp.Decrypt(k, cihper, nil)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(msg, plaintext) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestEncryptAndDecryptForRSA(t *testing.T) {
+	t.Skip()
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	pk, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, msg, nil)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	plaintext, err := csp.Decrypt(k, cihper, nil)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(msg, plaintext) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
 }

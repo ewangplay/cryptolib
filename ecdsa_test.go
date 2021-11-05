@@ -146,3 +146,43 @@ func TestEcdsaVerifier(t *testing.T) {
 		t.Fatalf("The signature should be validated")
 	}
 }
+
+func TestEcdsaEncrypter(t *testing.T) {
+	kg := &ecdsaKeyGenerator{}
+	encrypter := &ecdsaEncrypter{}
+
+	privKey, err := kg.KeyGen(nil)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello, world")
+	pubKey, _ := privKey.PublicKey()
+	_, err = encrypter.Encrypt(pubKey, msg, nil)
+	if err == nil {
+		t.Fatalf("Encrypt should be not implemented")
+	}
+}
+
+func TestEcdsaDecrypter(t *testing.T) {
+	kg := &ecdsaKeyGenerator{}
+	encrypter := &ecdsaEncrypter{}
+	decrypter := &ecdsaDecrypter{}
+
+	privKey, err := kg.KeyGen(nil)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello, world")
+	pubKey, _ := privKey.PublicKey()
+	cipher, err := encrypter.Encrypt(pubKey, msg, nil)
+	if err == nil {
+		t.Fatalf("Encrypt should be not implemented")
+	}
+
+	_, err = decrypter.Decrypt(privKey, cipher, nil)
+	if err == nil {
+		t.Fatalf("Decrypt should be not implemented")
+	}
+}

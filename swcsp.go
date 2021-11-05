@@ -13,6 +13,7 @@ type SWCSP struct {
 	Signers       map[reflect.Type]Signer
 	Verifiers     map[reflect.Type]Verifier
 	Hashers       map[reflect.Type]Hasher
+	Encrypters    map[reflect.Type]Encrypter
 }
 
 // NewSWCSP creates a SWCSP instance.
@@ -21,12 +22,14 @@ func NewSWCSP() (*SWCSP, error) {
 	verifiers := make(map[reflect.Type]Verifier)
 	keyGenerators := make(map[reflect.Type]KeyGenerator)
 	hashers := make(map[reflect.Type]Hasher)
+	encrypters := make(map[reflect.Type]Encrypter)
 
 	csp := &SWCSP{
 		KeyGenerators: keyGenerators,
 		Signers:       signers,
 		Verifiers:     verifiers,
 		Hashers:       hashers,
+		Encrypters:    encrypters,
 	}
 
 	err := initSWCSP(csp)
@@ -131,6 +134,36 @@ func (csp *SWCSP) Hash(msg []byte, opts HashOpts) (digest []byte, err error) {
 	return
 }
 
+// Encrypt encrypts plaintext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (csp *SWCSP) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
+	if k == nil {
+		return nil, fmt.Errorf("invalid Key, it must not be nil")
+	}
+	if len(plaintext) == 0 {
+		return nil, fmt.Errorf("invalid plaintext, cannot be empty")
+	}
+
+	encrypter, found := csp.Encrypters[reflect.TypeOf(k)]
+	if !found {
+		return nil, fmt.Errorf("unsupported 'EncryptKey' provided [%v]", k)
+	}
+
+	ciphertext, err = encrypter.Encrypt(k, plaintext, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed encrypting: %v", err)
+	}
+
+	return
+}
+
+// Decrypt decrypts ciphertext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (csp *SWCSP) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
+	err = fmt.Errorf("method is not implemented")
+	return
+}
+
 // AddWrapper binds the passed type to the passed wrapper.
 // Notice that that wrapper must be an instance of one of the following interfaces:
 // KeyGenerator, Signer, Verifier.
@@ -151,6 +184,8 @@ func (csp *SWCSP) AddWrapper(t reflect.Type, w interface{}) error {
 		csp.Verifiers[t] = dt
 	case Hasher:
 		csp.Hashers[t] = dt
+	case Encrypter:
+		csp.Encrypters[t] = dt
 	default:
 		return fmt.Errorf("wrapper type not valid, must be on of: KeyGenerator, Signer, Verifier")
 	}
@@ -177,6 +212,10 @@ func initSWCSP(csp *SWCSP) error {
 	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})
 	csp.AddWrapper(reflect.TypeOf(&SHA384Opts{}), &hasher{hash: sha512.New384})
 	csp.AddWrapper(reflect.TypeOf(&SHA512Opts{}), &hasher{hash: sha512.New})
+
+	// Set the Encrypters
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaEncrypter{})
+	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaEncrypter{})
 
 	return nil
 }

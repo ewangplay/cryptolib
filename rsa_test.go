@@ -83,3 +83,43 @@ func TestRsaKeyGen(t *testing.T) {
 		t.Fatalf("k should be private key")
 	}
 }
+
+func TestRsaEncrypter(t *testing.T) {
+	kg := &rsaKeyGenerator{}
+	encrypter := &rsaEncrypter{}
+
+	k, err := kg.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello, world")
+	pubKey, _ := k.PublicKey()
+	_, err = encrypter.Encrypt(pubKey, msg, nil)
+	if err == nil {
+		t.Fatalf("Encrypt should be not implemented")
+	}
+}
+
+func TestRsaDecrypter(t *testing.T) {
+	kg := &rsaKeyGenerator{}
+	encrypter := &rsaEncrypter{}
+	decrypter := &rsaDecrypter{}
+
+	k, err := kg.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello, world")
+	pubKey, _ := k.PublicKey()
+	cipher, err := encrypter.Encrypt(pubKey, msg, nil)
+	if err == nil {
+		t.Fatalf("Encrypt should be not implemented")
+	}
+
+	_, err = decrypter.Decrypt(k, cipher, nil)
+	if err == nil {
+		t.Fatalf("Decrypt should be not implemented")
+	}
+}
