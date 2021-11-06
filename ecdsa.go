@@ -83,11 +83,11 @@ func (k *EcdsaPrivateKey) Private() bool {
 // PublicKey returns the corresponding public key part of an asymmetric public/private key pair.
 // This method returns an error in symmetric key schemes.
 func (k *EcdsaPrivateKey) PublicKey() (Key, error) {
-	ecdsaPriKey, err := x509.ParseECPrivateKey(k.PrivKey)
+	ecPriKey, err := x509.ParseECPrivateKey(k.PrivKey)
 	if err != nil {
 		return nil, err
 	}
-	pubKeyBytes, err := x509.MarshalPKIXPublicKey(&ecdsaPriKey.PublicKey)
+	pubKeyBytes, err := x509.MarshalPKIXPublicKey(&ecPriKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +139,11 @@ func (ec *ecdsaSigner) Sign(k Key, digest []byte, opts SignatureOpts) (signature
 	if err != nil {
 		return nil, err
 	}
-	ecdsaPriKey, err := x509.ParseECPrivateKey(priKeyBytes)
+	ecPriKey, err := x509.ParseECPrivateKey(priKeyBytes)
 	if err != nil {
 		return nil, err
 	}
-	signature, err = ecdsa.SignASN1(rand.Reader, ecdsaPriKey, digest)
+	signature, err = ecdsa.SignASN1(rand.Reader, ecPriKey, digest)
 	if err != nil {
 		return nil, err
 	}
@@ -173,22 +173,4 @@ func (ec *ecdsaVerifier) Verify(k Key, digest, signature []byte, opts SignatureO
 
 	valid = ecdsa.VerifyASN1(ecdsaPubKey, digest, signature)
 	return valid, nil
-}
-
-type ecdsaEncrypter struct{}
-
-// Encrypt encrypts plaintext using key k.
-// The opts argument should be appropriate for the algorithm used.
-func (ec *ecdsaEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
-	err = fmt.Errorf("method is not implemented")
-	return
-}
-
-type ecdsaDecrypter struct{}
-
-// Decrypt decrypts ciphertext using key k.
-// The opts argument should be appropriate for the algorithm used.
-func (ec *ecdsaDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
-	err = fmt.Errorf("method is not implemented")
-	return
 }

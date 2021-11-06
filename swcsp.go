@@ -235,11 +235,11 @@ func initSWCSP(csp *SWCSP) error {
 	csp.AddWrapper(reflect.TypeOf(&SHA512Opts{}), &hasher{hash: sha512.New})
 
 	// Set the Encrypters
-	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaEncrypter{})
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &eciesEncrypter{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaEncrypter{})
 
 	// Set the Decrypters
-	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &ecdsaDecrypter{})
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &eciesDecrypter{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPrivateKey{}), &rsaDecrypter{})
 
 	return nil

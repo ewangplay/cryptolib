@@ -7,11 +7,9 @@ A common cryptographical library in Golang.
 * SHA2-256 / SHA2-384 / SHA2-512 hash algorithm.
 * Ed25519 / ECDSA / RSA key pair generating.
 * Ed25519 / ECDSA / RSA signature algorithm.
+* RSA / ECIES encryption algorithm.
 
 ## TODO
-
-* RSA encryption algorithm.
-* ECDSA encryption algorithm.
 
 ## Usage
 

@@ -885,8 +885,7 @@ func ExampleHash_sha512() {
 	// 2958f052052ce5c280fc1dcf97038c4f4bf36ca5bde0531567201b391d977db699c379b4d31c8b3dd75a407114104aecb84f8ca11cad67b33d865dd47a72dec3
 }
 
-func TestEncryptAndDecryptForECDSA(t *testing.T) {
-	t.Skip()
+func TestEncryptAndDecryptForECIES(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
