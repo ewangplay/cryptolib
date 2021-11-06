@@ -128,7 +128,7 @@ func (kg *ecdsaKeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 type ecdsaSigner struct{}
 
 // Sign signs digest using key k
-func (ec *ecdsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
+func (ec *ecdsaSigner) Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("ECDSA signing error: %v", e)
@@ -154,7 +154,7 @@ func (ec *ecdsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []by
 type ecdsaVerifier struct{}
 
 // Verify verifies signature against key k and digest
-func (ec *ecdsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
+func (ec *ecdsaVerifier) Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("ECDSA verifying signature error: %v", e)
@@ -179,7 +179,7 @@ type ecdsaEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (ec *ecdsaEncrypter) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
+func (ec *ecdsaEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
 	err = fmt.Errorf("method is not implemented")
 	return
 }
@@ -188,7 +188,7 @@ type ecdsaDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (ec *ecdsaDecrypter) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
+func (ec *ecdsaDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
 	err = fmt.Errorf("method is not implemented")
 	return
 }

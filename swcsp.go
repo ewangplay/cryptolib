@@ -14,6 +14,7 @@ type SWCSP struct {
 	Verifiers     map[reflect.Type]Verifier
 	Hashers       map[reflect.Type]Hasher
 	Encrypters    map[reflect.Type]Encrypter
+	Decrypters    map[reflect.Type]Decrypter
 }
 
 // NewSWCSP creates a SWCSP instance.
@@ -23,6 +24,7 @@ func NewSWCSP() (*SWCSP, error) {
 	keyGenerators := make(map[reflect.Type]KeyGenerator)
 	hashers := make(map[reflect.Type]Hasher)
 	encrypters := make(map[reflect.Type]Encrypter)
+	decrypters := make(map[reflect.Type]Decrypter)
 
 	csp := &SWCSP{
 		KeyGenerators: keyGenerators,
@@ -30,6 +32,7 @@ func NewSWCSP() (*SWCSP, error) {
 		Verifiers:     verifiers,
 		Hashers:       hashers,
 		Encrypters:    encrypters,
+		Decrypters:    decrypters,
 	}
 
 	err := initSWCSP(csp)
@@ -64,7 +67,7 @@ func (csp *SWCSP) KeyGen(opts KeyGenOpts) (k Key, err error) {
 // Note that when a signature of a hash of a larger message is needed,
 // the caller is responsible for hashing the larger message and passing
 // the hash (as digest).
-func (csp *SWCSP) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
+func (csp *SWCSP) Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error) {
 	if k == nil {
 		return nil, fmt.Errorf("invalid Key, it must not be nil")
 	}
@@ -75,7 +78,7 @@ func (csp *SWCSP) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, e
 	keyType := reflect.TypeOf(k)
 	signer, found := csp.Signers[keyType]
 	if !found {
-		return nil, fmt.Errorf("unsupported 'SignKey' provided [%s]", keyType)
+		return nil, fmt.Errorf("unsupported 'SignatureKey' provided [%s]", keyType)
 	}
 
 	signature, err = signer.Sign(k, digest, opts)
@@ -87,7 +90,7 @@ func (csp *SWCSP) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, e
 }
 
 // Verify verifies signature against key k and digest
-func (csp *SWCSP) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
+func (csp *SWCSP) Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error) {
 	if k == nil {
 		return false, fmt.Errorf("invalid Key, it must not be nil")
 	}
@@ -100,7 +103,7 @@ func (csp *SWCSP) Verify(k Key, digest, signature []byte, opts VerifyOpts) (vali
 
 	verifier, found := csp.Verifiers[reflect.TypeOf(k)]
 	if !found {
-		return false, fmt.Errorf("unsupported 'VerifyKey' provided [%v]", k)
+		return false, fmt.Errorf("unsupported 'SignatureKey' provided [%v]", k)
 	}
 
 	valid, err = verifier.Verify(k, digest, signature, opts)
@@ -136,7 +139,7 @@ func (csp *SWCSP) Hash(msg []byte, opts HashOpts) (digest []byte, err error) {
 
 // Encrypt encrypts plaintext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (csp *SWCSP) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
+func (csp *SWCSP) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
 	if k == nil {
 		return nil, fmt.Errorf("invalid Key, it must not be nil")
 	}
@@ -146,7 +149,7 @@ func (csp *SWCSP) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext
 
 	encrypter, found := csp.Encrypters[reflect.TypeOf(k)]
 	if !found {
-		return nil, fmt.Errorf("unsupported 'EncryptKey' provided [%v]", k)
+		return nil, fmt.Errorf("unsupported 'EnciphermentKey' provided [%v]", k)
 	}
 
 	ciphertext, err = encrypter.Encrypt(k, plaintext, opts)
@@ -159,8 +162,24 @@ func (csp *SWCSP) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext
 
 // Decrypt decrypts ciphertext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (csp *SWCSP) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
-	err = fmt.Errorf("method is not implemented")
+func (csp *SWCSP) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
+	if k == nil {
+		return nil, fmt.Errorf("invalid Key, it must not be nil")
+	}
+	if len(ciphertext) == 0 {
+		return nil, fmt.Errorf("invalid ciphertext, cannot be empty")
+	}
+
+	decrypter, found := csp.Decrypters[reflect.TypeOf(k)]
+	if !found {
+		return nil, fmt.Errorf("unsupported 'EnciphermentKey' provided [%v]", k)
+	}
+
+	plaintext, err = decrypter.Decrypt(k, ciphertext, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed decrypting: %v", err)
+	}
+
 	return
 }
 
@@ -186,6 +205,8 @@ func (csp *SWCSP) AddWrapper(t reflect.Type, w interface{}) error {
 		csp.Hashers[t] = dt
 	case Encrypter:
 		csp.Encrypters[t] = dt
+	case Decrypter:
+		csp.Decrypters[t] = dt
 	default:
 		return fmt.Errorf("wrapper type not valid, must be on of: KeyGenerator, Signer, Verifier")
 	}
@@ -216,6 +237,10 @@ func initSWCSP(csp *SWCSP) error {
 	// Set the Encrypters
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaEncrypter{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaEncrypter{})
+
+	// Set the Decrypters
+	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &ecdsaDecrypter{})
+	csp.AddWrapper(reflect.TypeOf(&RsaPrivateKey{}), &rsaDecrypter{})
 
 	return nil
 }

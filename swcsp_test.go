@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/elliptic"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -220,7 +221,7 @@ func TestSignWithKeyTypeMismatch(t *testing.T) {
 		t.Fatalf("Sign should be failed when key type is mismatched")
 	}
 
-	errShouldContain(t, err, "unsupported 'SignKey' provided")
+	errShouldContain(t, err, "unsupported 'SignatureKey' provided")
 }
 
 func errShouldContain(t *testing.T, err error, msg string) {
@@ -232,7 +233,7 @@ func errShouldContain(t *testing.T, err error, msg string) {
 type mockSigner struct{}
 
 // Sign signs digest using key k
-func (m *mockSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
+func (m *mockSigner) Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error) {
 	return nil, fmt.Errorf("internal exception")
 }
 
@@ -325,7 +326,7 @@ func TestSignSuccForRSAPSS(t *testing.T) {
 		t.Fatalf("Hash failed %v", err)
 	}
 
-	_, err = csp.Sign(k, digest, &RSASignOpts{Schema: PSS, Hash: crypto.SHA384})
+	_, err = csp.Sign(k, digest, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -348,7 +349,7 @@ func TestSignSuccForRSAPKCS1V15(t *testing.T) {
 		t.Fatalf("Hash failed %v", err)
 	}
 
-	_, err = csp.Sign(k, digest, &RSASignOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
+	_, err = csp.Sign(k, digest, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -439,7 +440,7 @@ func TestVerifyWithKeyTypeMismatch(t *testing.T) {
 		t.Fatalf("Verify should be failed when key type is mismatched")
 	}
 
-	errShouldContain(t, err, "unsupported 'VerifyKey' provided")
+	errShouldContain(t, err, "unsupported 'SignatureKey' provided")
 }
 
 type mockPublicKey struct{}
@@ -480,7 +481,7 @@ func (k *mockPublicKey) PublicKey() (Key, error) {
 type mockVerifier struct{}
 
 // Verify verifies signature against key k and digest
-func (m *mockVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
+func (m *mockVerifier) Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error) {
 	return false, fmt.Errorf("intertal exception")
 }
 
@@ -617,7 +618,7 @@ func TestVerifySuccForRSAPSS(t *testing.T) {
 		t.Fatalf("Hash failed %v", err)
 	}
 
-	signature, err := csp.Sign(k, digest, &RSASignOpts{Schema: PSS, Hash: crypto.SHA384})
+	signature, err := csp.Sign(k, digest, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -627,7 +628,7 @@ func TestVerifySuccForRSAPSS(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	valid, err := csp.Verify(pubKey, digest, signature, &RSAVerifyOpts{Schema: PSS, Hash: crypto.SHA384})
+	valid, err := csp.Verify(pubKey, digest, signature, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -653,7 +654,7 @@ func TestVerifySuccForRSAPKCS1V15(t *testing.T) {
 		t.Fatalf("Hash failed %v", err)
 	}
 
-	signature, err := csp.Sign(k, digest, &RSASignOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
+	signature, err := csp.Sign(k, digest, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -663,7 +664,7 @@ func TestVerifySuccForRSAPKCS1V15(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	valid, err := csp.Verify(pubKey, digest, signature, &RSAVerifyOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
+	valid, err := csp.Verify(pubKey, digest, signature, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -901,23 +902,22 @@ func TestEncryptAndDecryptForECDSA(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	msg := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, msg, nil)
+	plaintext := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, plaintext, nil)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	plaintext, err := csp.Decrypt(k, cihper, nil)
+	result, err := csp.Decrypt(k, cihper, nil)
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
-	if bytes.Compare(msg, plaintext) != 0 {
+	if bytes.Compare(plaintext, result) != 0 {
 		t.Fatalf("The original text should be equal to the decrypted text")
 	}
 }
 
 func TestEncryptAndDecryptForRSA(t *testing.T) {
-	t.Skip()
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
@@ -933,17 +933,79 @@ func TestEncryptAndDecryptForRSA(t *testing.T) {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	msg := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, msg, nil)
+	plaintext := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, plaintext, nil)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	plaintext, err := csp.Decrypt(k, cihper, nil)
+	result, err := csp.Decrypt(k, cihper, nil)
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
-	if bytes.Compare(msg, plaintext) != 0 {
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestEncryptAndDecryptForRSAOAEP(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	pk, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	plaintext := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, plaintext, &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := csp.Decrypt(k, cihper, &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestEncryptAndDecryptForRSAPKCS1V15(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	pk, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	plaintext := []byte("hello,world")
+	cihper, err := csp.Encrypt(pk, plaintext, &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := csp.Decrypt(k, cihper, &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(plaintext, result) != 0 {
 		t.Fatalf("The original text should be equal to the decrypted text")
 	}
 }

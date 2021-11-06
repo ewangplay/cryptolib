@@ -93,11 +93,11 @@ func TestRsaEncrypter(t *testing.T) {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 
-	msg := []byte("hello, world")
+	plaintext := []byte("hello, world")
 	pubKey, _ := k.PublicKey()
-	_, err = encrypter.Encrypt(pubKey, msg, nil)
-	if err == nil {
-		t.Fatalf("Encrypt should be not implemented")
+	_, err = encrypter.Encrypt(pubKey, plaintext, nil)
+	if err != nil {
+		t.Fatalf("RSA encrypting failed: %v", err)
 	}
 }
 
@@ -111,15 +111,19 @@ func TestRsaDecrypter(t *testing.T) {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 
-	msg := []byte("hello, world")
+	plaintext := []byte("hello, world")
 	pubKey, _ := k.PublicKey()
-	cipher, err := encrypter.Encrypt(pubKey, msg, nil)
-	if err == nil {
-		t.Fatalf("Encrypt should be not implemented")
+	cipher, err := encrypter.Encrypt(pubKey, plaintext, nil)
+	if err != nil {
+		t.Fatalf("RSA encrypting failed: %v", err)
 	}
 
-	_, err = decrypter.Decrypt(k, cipher, nil)
-	if err == nil {
-		t.Fatalf("Decrypt should be not implemented")
+	result, err := decrypter.Decrypt(k, cipher, nil)
+	if err != nil {
+		t.Fatalf("RSA decrypting failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
 	}
 }

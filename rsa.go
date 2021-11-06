@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
 )
@@ -117,7 +118,7 @@ func (kg *rsaKeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 type rsaSigner struct{}
 
 // Sign signs digest using key k
-func (rs *rsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error) {
+func (rs *rsaSigner) Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("RSA signing error: %v", e)
@@ -139,12 +140,12 @@ func (rs *rsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte
 	hash := crypto.SHA256
 	if opts != nil {
 		if opts.Algorithm() != RSA {
-			return nil, fmt.Errorf("SignOpts type invalid: %v", opts)
+			return nil, fmt.Errorf("SignatureOpts type invalid: %v", opts)
 		}
 
-		signOpts, ok := opts.(*RSASignOpts)
+		signOpts, ok := opts.(*RSASignatureOpts)
 		if !ok {
-			return nil, fmt.Errorf("SignOpts type invalid: %v", opts)
+			return nil, fmt.Errorf("SignatureOpts type invalid: %v", opts)
 		}
 
 		// If opts.Schema is set, it overrides schema.
@@ -182,7 +183,7 @@ func (rs *rsaSigner) Sign(k Key, digest []byte, opts SignOpts) (signature []byte
 type rsaVerifier struct{}
 
 // Verify verifies signature against key k and digest
-func (rs *rsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error) {
+func (rs *rsaVerifier) Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("RSA verifying signature error: %v", e)
@@ -204,20 +205,20 @@ func (rs *rsaVerifier) Verify(k Key, digest, signature []byte, opts VerifyOpts) 
 	hash := crypto.SHA256
 	if opts != nil {
 		if opts.Algorithm() != RSA {
-			return false, fmt.Errorf("VerifyOpts type invalid: %v", opts)
+			return false, fmt.Errorf("SignatureOpts type invalid: %v", opts)
 		}
-		verifyOpts, ok := opts.(*RSAVerifyOpts)
+		signOpts, ok := opts.(*RSASignatureOpts)
 		if !ok {
-			return false, fmt.Errorf("VerifyOpts type invalid: %v", opts)
+			return false, fmt.Errorf("SignatureOpts type invalid: %v", opts)
 		}
 
 		// If opts.Schema is set, it overrides schema.
-		if verifyOpts.Schema != "" {
-			schema = verifyOpts.Schema
+		if signOpts.Schema != "" {
+			schema = signOpts.Schema
 		}
 		// If opts.Hash is set, it orverrides hash.
-		if verifyOpts.Hash > 0 {
-			hash = verifyOpts.Hash
+		if signOpts.Hash > 0 {
+			hash = signOpts.Hash
 		}
 
 		if schema == PSS {
@@ -247,8 +248,59 @@ type rsaEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (rs *rsaEncrypter) Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error) {
-	err = fmt.Errorf("method is not implemented")
+func (rs *rsaEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("RSA encrypting error: %v", e)
+		}
+	}()
+
+	pubKeyBytes, err := k.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	pubKey, err := x509.ParsePKCS1PublicKey(pubKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Default schema is PSS
+	schema := OAEP
+	// Sefault hash instance is sha256.New()
+	hash := sha256.New()
+	label := ""
+	if opts != nil {
+		if opts.Algorithm() != RSA {
+			return nil, fmt.Errorf("EnciphermentOpts type invalid: %v", opts)
+		}
+		encipherOpts, ok := opts.(*RSAEnciphermentOpts)
+		if !ok {
+			return nil, fmt.Errorf("EnciphermentOpts type invalid: %v", opts)
+		}
+
+		// If opts.Schema is set, it overrides schema.
+		if encipherOpts.Schema != "" {
+			schema = encipherOpts.Schema
+		}
+		// If opts.Hash is set, it orverrides hash.
+		if encipherOpts.Hash != nil {
+			hash = encipherOpts.Hash
+		}
+		if encipherOpts.Label != "" {
+			label = encipherOpts.Label
+		}
+
+		if schema == OAEP {
+			ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, pubKey, plaintext, []byte(label))
+		} else if schema == PKCS1V15 {
+			ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, pubKey, plaintext)
+		} else {
+			return nil, fmt.Errorf("unsupported RSA encipherment schema")
+		}
+	} else {
+		ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, pubKey, plaintext, []byte(label))
+	}
+
 	return
 }
 
@@ -256,7 +308,58 @@ type rsaDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
 // The opts argument should be appropriate for the algorithm used.
-func (rs *rsaDecrypter) Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error) {
-	err = fmt.Errorf("method is not implemented")
+func (rs *rsaDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("RSA decrypting error: %v", e)
+		}
+	}()
+
+	priKeyBytes, err := k.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	rsaPriKey, err := x509.ParsePKCS1PrivateKey(priKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Default schema is PSS
+	schema := OAEP
+	// Sefault hash instance is sha256.New()
+	hash := sha256.New()
+	label := ""
+	if opts != nil {
+		if opts.Algorithm() != RSA {
+			return nil, fmt.Errorf("EnciphermentOpts type invalid: %v", opts)
+		}
+		encipherOpts, ok := opts.(*RSAEnciphermentOpts)
+		if !ok {
+			return nil, fmt.Errorf("EnciphermentOpts type invalid: %v", opts)
+		}
+
+		// If opts.Schema is set, it overrides schema.
+		if encipherOpts.Schema != "" {
+			schema = encipherOpts.Schema
+		}
+		// If opts.Hash is set, it orverrides hash.
+		if encipherOpts.Hash != nil {
+			hash = encipherOpts.Hash
+		}
+		if encipherOpts.Label != "" {
+			label = encipherOpts.Label
+		}
+
+		if schema == OAEP {
+			plaintext, err = rsa.DecryptOAEP(hash, rand.Reader, rsaPriKey, ciphertext, []byte(label))
+		} else if schema == PKCS1V15 {
+			plaintext, err = rsa.DecryptPKCS1v15(rand.Reader, rsaPriKey, ciphertext)
+		} else {
+			return nil, fmt.Errorf("unsupported RSA encipherment schema")
+		}
+	} else {
+		plaintext, err = rsa.DecryptOAEP(hash, rand.Reader, rsaPriKey, ciphertext, []byte(label))
+	}
+
 	return
 }

@@ -37,23 +37,17 @@ type HashOpts interface {
 	Algorithm() string
 }
 
-// SignOpts contains options for signing with a CSP.
-type SignOpts interface {
+// SignatureOpts contains options for signature with a CSP.
+type SignatureOpts interface {
 	// Algorithm returns the signing algorithm identifier (to be used).
 	Algorithm() string
 }
 
-// VerifyOpts contains options for signature verifing with a CSP.
-type VerifyOpts interface {
-	// Algorithm returns the signature verifing algorithm identifier (to be used).
+// EnciphermentOpts contains options for encipherment with a CSP.
+type EnciphermentOpts interface {
+	// Algorithm returns the encryption algorithm identifier (to be used).
 	Algorithm() string
 }
-
-// EncryptOpts contains options for encrypting with a CSP.
-type EncryptOpts interface{}
-
-// DecryptOpts contains options for decrypting with a CSP.
-type DecryptOpts interface{}
 
 // KeyGenerator is a interface that provides key generation algorithms
 type KeyGenerator interface {
@@ -68,13 +62,13 @@ type Signer interface {
 	// Note that when a signature of a hash of a larger message is needed,
 	// the caller is responsible for hashing the larger message and passing
 	// the hash (as digest).
-	Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error)
+	Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error)
 }
 
 // Verifier is a interface that provides verifying algorithms
 type Verifier interface {
 	// Verify verifies signature against key k and digest
-	Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error)
+	Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error)
 }
 
 // Hasher is a BCCSP-like interface that provides hash algorithms
@@ -88,14 +82,14 @@ type Hasher interface {
 type Encrypter interface {
 	// Encrypt encrypts plaintext using key k.
 	// The opts argument should be appropriate for the algorithm used.
-	Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error)
+	Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error)
 }
 
 // Decrypter is a interface that provides decrypting algorithms
 type Decrypter interface {
 	// Decrypt decrypts ciphertext using key k.
 	// The opts argument should be appropriate for the algorithm used.
-	Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error)
+	Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error)
 }
 
 // CSP is the cryptographic service provider that offers
@@ -113,16 +107,16 @@ type CSP interface {
 	// Note that when a signature of a hash of a larger message is needed,
 	// the caller is responsible for hashing the larger message and passing
 	// the hash (as digest).
-	Sign(k Key, digest []byte, opts SignOpts) (signature []byte, err error)
+	Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error)
 
 	// Verify verifies signature against key k and digest
-	Verify(k Key, digest, signature []byte, opts VerifyOpts) (valid bool, err error)
+	Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error)
 
 	// Encrypt encrypts plaintext using key k.
 	// The opts argument should be appropriate for the algorithm used.
-	Encrypt(k Key, plaintext []byte, opts EncryptOpts) (ciphertext []byte, err error)
+	Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error)
 
 	// Decrypt decrypts ciphertext using key k.
 	// The opts argument should be appropriate for the algorithm used.
-	Decrypt(k Key, ciphertext []byte, opts DecryptOpts) (plaintext []byte, err error)
+	Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error)
 }

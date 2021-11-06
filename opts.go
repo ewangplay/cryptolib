@@ -3,6 +3,7 @@ package cryptolib
 import (
 	"crypto"
 	"crypto/elliptic"
+	"hash"
 )
 
 const (
@@ -23,6 +24,9 @@ const (
 
 	// PSS is the version 2 of RSA signature algorithm, the Probabilistic Signature Scheme.
 	PSS = "PSS"
+
+	// OAEP is the version 2 of RSA encipherment algorithm, the Optimal Asymmetric Encryption Paddinga Scheme.
+	OAEP = "OAEP"
 
 	// SHA256 hash algorithm
 	SHA256 = "SHA256"
@@ -90,24 +94,33 @@ func (opts *SHA512Opts) Algorithm() string {
 	return SHA512
 }
 
-// RSASignOpts contains options relating to PSS signing algorithm.
-type RSASignOpts struct {
+// RSASignatureOpts contains options relating to PSS signing algorithm.
+type RSASignatureOpts struct {
+	// PKCS1V15 or PSS
 	Schema string
 	Hash   crypto.Hash
 }
 
 // Algorithm returns the RSA algorithm identifier (to be used).
-func (opts *RSASignOpts) Algorithm() string {
+func (opts *RSASignatureOpts) Algorithm() string {
 	return RSA
 }
 
-// RSAVerifyOpts contains options relating to PKCS1V15 signing algorithm.
-type RSAVerifyOpts struct {
+// RSAEnciphermentOpts contains options relating to RSA encryption algorithm.
+type RSAEnciphermentOpts struct {
+	// PKCS1V15 or OAEP
 	Schema string
-	Hash   crypto.Hash
+	Hash   hash.Hash
+
+	// The label parameter may contain arbitrary data that will not be encrypted,
+	//  but which gives important context to the message. For example, if a given
+	//  public key is used to encrypt two types of messages then distinct label
+	//  values could be used to ensure that a ciphertext for one purpose cannot
+	//  be used for another by an attacker. If not required it can be empty.
+	Label string
 }
 
 // Algorithm returns the RSA algorithm identifier (to be used).
-func (opts *RSAVerifyOpts) Algorithm() string {
+func (opts *RSAEnciphermentOpts) Algorithm() string {
 	return RSA
 }
