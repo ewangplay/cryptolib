@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/elliptic"
 	"hash"
+	"io"
 )
 
 const (
@@ -36,6 +37,9 @@ const (
 
 	// SHA512 hash algorithm
 	SHA512 = "SHA512"
+
+	// AES Advanced Encryption Standard
+	AES = "AES"
 )
 
 // ED25519KeyGenOpts contains options for ED25519 key generation.
@@ -65,6 +69,18 @@ type RSAKeyGenOpts struct {
 // Algorithm returns the key generation algorithm identifier for RSA.
 func (opts *RSAKeyGenOpts) Algorithm() string {
 	return RSA
+}
+
+// AESKeyGenOpts contains options for AES key generation.
+// Notice that Len is the key length in bytes, it can only be
+// 16(128 bits) or 24(192 bits) or 32(256 bits).
+type AESKeyGenOpts struct {
+	Len int
+}
+
+// Algorithm returns the key generation algorithm identifier for AES.
+func (opts *AESKeyGenOpts) Algorithm() string {
+	return AES
 }
 
 // SHA256Opts contains options relating to SHA-256.
@@ -123,4 +139,24 @@ type RSAEnciphermentOpts struct {
 // Algorithm returns the RSA algorithm identifier (to be used).
 func (opts *RSAEnciphermentOpts) Algorithm() string {
 	return RSA
+}
+
+// AESCBCPKCS7ModeOpts contains options for AES encryption in CBC mode
+// with PKCS7 padding.
+//  1. Both IV and PRNG can be nil. In that case, the implementation
+// is supposed to sample the IV using a cryptographic secure PRNG.
+//  2. Either IV or PRNG can be different from nil.
+type AESCBCPKCS7ModeOpts struct {
+	// IV is the initialization vector to be used by the underlying cipher.
+	// The length of IV must be the same as the Block's block size.
+	// It is used only if different from nil.
+	IV []byte
+	// PRNG is an instance of a PRNG to be used by the underlying cipher.
+	// It is used only if different from nil.
+	PRNG io.Reader
+}
+
+// Algorithm returns the AES algorithm identifier (to be used).
+func (opts *AESCBCPKCS7ModeOpts) Algorithm() string {
+	return AES
 }

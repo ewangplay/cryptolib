@@ -137,6 +137,23 @@ func TestKeyGenSuccForRSABits(t *testing.T) {
 	}
 }
 
+func TestKeyGenSuccForAES(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&aesPrivateKey{}) {
+		t.Fatalf("Key returned by KeyGen should be aesPrivateKey type")
+	}
+}
+
 func TestSignWithKeyIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
