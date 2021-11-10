@@ -8,6 +8,7 @@ A common cryptographical library in Golang.
 * Ed25519 / ECDSA / RSA key pair generating.
 * Ed25519 / ECDSA / RSA signature algorithm.
 * RSA / ECIES encryption algorithm.
+* AES symmetric encryption algorithm.
 
 ## TODO
 
