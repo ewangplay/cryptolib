@@ -194,11 +194,6 @@ func TestSignWithDigestIsEmpty(t *testing.T) {
 
 type mockPrivateKey struct{}
 
-// Version returns the version of this key
-func (k *mockPrivateKey) Version() int {
-	return ed25519V1
-}
-
 // Type returns the type of this key
 func (k *mockPrivateKey) Type() string {
 	return ED25519
@@ -461,11 +456,6 @@ func TestVerifyWithKeyTypeMismatch(t *testing.T) {
 }
 
 type mockPublicKey struct{}
-
-// Version returns the version of this key
-func (k *mockPublicKey) Version() int {
-	return ed25519V1
-}
 
 // Type returns the type of this key
 func (k *mockPublicKey) Type() string {

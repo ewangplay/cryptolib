@@ -8,18 +8,9 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
-const (
-	sm2V1 = 1
-)
-
 // sm2PublicKey represents the sm2 public key
 type sm2PublicKey struct {
 	PubKey *sm2.PublicKey
-}
-
-// Version returns the version of this key
-func (k *sm2PublicKey) Version() int {
-	return sm2V1
 }
 
 // Type returns the type of this key
@@ -53,11 +44,6 @@ func (k *sm2PublicKey) PublicKey() (Key, error) {
 // sm2PrivateKey represents the sm2 private key
 type sm2PrivateKey struct {
 	PrivKey *sm2.PrivateKey
-}
-
-// Version returns the version of this key
-func (k *sm2PrivateKey) Version() int {
-	return sm2V1
 }
 
 // Type returns the type of this key

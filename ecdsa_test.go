@@ -22,10 +22,6 @@ func TestEcdsaKey(t *testing.T) {
 		PrivKey: ecPriKeyBytes,
 	}
 
-	if privKey.Version() != ecdsaV1 {
-		t.Fatalf("key version should be 1")
-	}
-
 	if privKey.Type() != ECDSA {
 		t.Fatalf("key type should be %v", ECDSA)
 	}
@@ -46,10 +42,6 @@ func TestEcdsaKey(t *testing.T) {
 	pubKey, err := privKey.PublicKey()
 	if err != nil {
 		t.Fatalf("Get the public key of privKey failed: %v", err)
-	}
-
-	if pubKey.Version() != ecdsaV1 {
-		t.Fatalf("key version should be 1")
 	}
 
 	if pubKey.Type() != ECDSA {

@@ -8,16 +8,9 @@ import (
 	"fmt"
 )
 
-const ecdsaV1 = 1
-
 // EcdsaPublicKey represents the ecdsa public key
 type EcdsaPublicKey struct {
 	PubKey []byte
-}
-
-// Version returns the version of this key
-func (k *EcdsaPublicKey) Version() int {
-	return ecdsaV1
 }
 
 // Type returns the type of this key
@@ -51,11 +44,6 @@ func (k *EcdsaPublicKey) PublicKey() (Key, error) {
 // EcdsaPrivateKey represents the ecdsa private key
 type EcdsaPrivateKey struct {
 	PrivKey []byte
-}
-
-// Version returns the version of this key
-func (k *EcdsaPrivateKey) Version() int {
-	return ecdsaV1
 }
 
 // Type returns the type of this key

@@ -10,18 +10,12 @@ import (
 )
 
 const (
-	rsaV1          = 1
 	rsaDefaultBits = 2048
 )
 
 // RsaPublicKey represents the rsa public key
 type RsaPublicKey struct {
 	PubKey []byte
-}
-
-// Version returns the version of this key
-func (k *RsaPublicKey) Version() int {
-	return rsaV1
 }
 
 // Type returns the type of this key
@@ -55,11 +49,6 @@ func (k *RsaPublicKey) PublicKey() (Key, error) {
 // RsaPrivateKey represents the rsa private key
 type RsaPrivateKey struct {
 	PrivKey []byte
-}
-
-// Version returns the version of this key
-func (k *RsaPrivateKey) Version() int {
-	return rsaV1
 }
 
 // Type returns the type of this key

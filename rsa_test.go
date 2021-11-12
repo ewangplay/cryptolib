@@ -18,10 +18,6 @@ func TestRsaKey(t *testing.T) {
 		PrivKey: rsaPrKeyBytes,
 	}
 
-	if privKey.Version() != rsaV1 {
-		t.Fatalf("key version should be 1")
-	}
-
 	if privKey.Type() != RSA {
 		t.Fatalf("key type should be %v", RSA)
 	}
@@ -42,10 +38,6 @@ func TestRsaKey(t *testing.T) {
 	pubKey, err := privKey.PublicKey()
 	if err != nil {
 		t.Fatalf("Get the public key of privKey failed: %v", err)
-	}
-
-	if pubKey.Version() != rsaV1 {
-		t.Fatalf("key version should be 1")
 	}
 
 	if pubKey.Type() != RSA {

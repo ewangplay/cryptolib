@@ -11,17 +11,11 @@ import (
 )
 
 const (
-	aesV1            = 1
 	aesKeyDefaultLen = 16
 )
 
 type aesPrivateKey struct {
 	privKey []byte
-}
-
-// Version returns the version of this key
-func (k *aesPrivateKey) Version() int {
-	return aesV1
 }
 
 // Type returns the type of this key

@@ -2,9 +2,6 @@ package cryptolib
 
 // Key represents a cryptographic key
 type Key interface {
-	// Version returns the version of this key
-	Version() int
-
 	// Type returns the type of this key
 	Type() string
 
