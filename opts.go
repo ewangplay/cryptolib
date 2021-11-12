@@ -40,6 +40,9 @@ const (
 
 	// AES Advanced Encryption Standard
 	AES = "AES"
+
+	// SM2 国密椭圆曲线算法
+	SM2 = "SM2"
 )
 
 // ED25519KeyGenOpts contains options for ED25519 key generation.
@@ -81,6 +84,15 @@ type AESKeyGenOpts struct {
 // Algorithm returns the key generation algorithm identifier for AES.
 func (opts *AESKeyGenOpts) Algorithm() string {
 	return AES
+}
+
+// SM2KeyGenOpts contains options for SM2 key generation.
+type SM2KeyGenOpts struct {
+}
+
+// Algorithm returns the key generation algorithm identifier for SM2.
+func (opts *SM2KeyGenOpts) Algorithm() string {
+	return SM2
 }
 
 // SHA256Opts contains options relating to SHA-256.

@@ -11,6 +11,9 @@ A common cryptographical library in Golang.
 * AES symmetric encryption algorithm.
 
 ## TODO
+* SM2: 国密椭圆曲线算法库
+* SM3: 国密hash算法库
+* SM4: 国密分组密码算法库
 
 ## Usage
 
