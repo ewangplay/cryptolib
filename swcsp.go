@@ -219,16 +219,19 @@ func initSWCSP(csp *SWCSP) error {
 	csp.AddWrapper(reflect.TypeOf(&ECDSAKeyGenOpts{}), &ecdsaKeyGenerator{})
 	csp.AddWrapper(reflect.TypeOf(&RSAKeyGenOpts{}), &rsaKeyGenerator{})
 	csp.AddWrapper(reflect.TypeOf(&AESKeyGenOpts{}), &aesKeyGenerator{})
+	csp.AddWrapper(reflect.TypeOf(&SM2KeyGenOpts{}), &sm2KeyGenerator{})
 
 	// Set the Signers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PrivateKey{}), &ed25519Signer{})
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &ecdsaSigner{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPrivateKey{}), &rsaSigner{})
+	csp.AddWrapper(reflect.TypeOf(&sm2PrivateKey{}), &sm2Signer{})
 
 	// Set the Verifiers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PublicKey{}), &ed25519Verifier{})
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &ecdsaVerifier{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaVerifier{})
+	csp.AddWrapper(reflect.TypeOf(&sm2PublicKey{}), &sm2Verifier{})
 
 	// Set the Hashers
 	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})

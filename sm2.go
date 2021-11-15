@@ -2,10 +2,11 @@ package cryptolib
 
 import (
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 
+	"github.com/tjfoc/gmsm/pkcs12"
 	"github.com/tjfoc/gmsm/sm2"
+	"github.com/tjfoc/gmsm/x509"
 )
 
 // sm2PublicKey represents the sm2 public key
@@ -20,7 +21,7 @@ func (k *sm2PublicKey) Type() string {
 
 // Bytes converts this key to its byte representation.
 func (k *sm2PublicKey) Bytes() ([]byte, error) {
-	return json.Marshal(k.PubKey)
+	return x509.MarshalSm2PublicKey(k.PubKey)
 }
 
 // Symmetric returns true if this key is a symmetric key,
@@ -53,7 +54,7 @@ func (k *sm2PrivateKey) Type() string {
 
 // Bytes converts this key to its byte representation.
 func (k *sm2PrivateKey) Bytes() ([]byte, error) {
-	return json.Marshal(k.PrivKey)
+	return pkcs12.MarshalECPrivateKey(k.PrivKey)
 }
 
 // Symmetric returns true if this key is a symmetric key,
@@ -86,4 +87,62 @@ func (kg *sm2KeyGenerator) KeyGen(opts KeyGenOpts) (Key, error) {
 	return &sm2PrivateKey{
 		PrivKey: priKey,
 	}, nil
+}
+
+type sm2Signer struct{}
+
+// Sign signs digest using key k
+func (sm *sm2Signer) Sign(k Key, digest []byte, opts SignatureOpts) (signature []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("SM2 signing error: %v", e)
+		}
+	}()
+
+	priKeyBytes, err := k.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	sm2PriKey, err := x509.ParseSm2PrivateKey(priKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	r, s, err := sm2.Sm2Sign(sm2PriKey, digest, nil, rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	signature, err = sm2.SignDigitToSignData(r, s)
+	if err != nil {
+		return nil, err
+	}
+
+	return signature, nil
+}
+
+type sm2Verifier struct{}
+
+// Verify verifies signature against key k and digest
+func (sm *sm2Verifier) Verify(k Key, digest, signature []byte, opts SignatureOpts) (valid bool, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("SM2 verifying signature error: %v", e)
+		}
+	}()
+
+	pubKeyBytes, err := k.Bytes()
+	if err != nil {
+		return false, err
+	}
+	sm2PubKey, err := x509.ParseSm2PublicKey(pubKeyBytes)
+	if err != nil {
+		return false, err
+	}
+
+	r, s, err := sm2.SignDataToSignDigit(signature)
+	if err != nil {
+		return false, err
+	}
+	valid = sm2.Sm2Verify(sm2PubKey, digest, nil, r, s)
+	return valid, nil
 }

@@ -154,6 +154,23 @@ func TestKeyGenSuccForAES(t *testing.T) {
 	}
 }
 
+func TestKeyGenSuccForSM2(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM2KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&sm2PrivateKey{}) {
+		t.Fatalf("Key returned by KeyGen should be sm2PrivateKey type")
+	}
+}
+
 func TestSignWithKeyIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
@@ -362,6 +379,29 @@ func TestSignSuccForRSAPKCS1V15(t *testing.T) {
 	}
 
 	_, err = csp.Sign(k, digest, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+}
+
+func TestSignSuccForSM2(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM2KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("Key generating failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	_, err = csp.Sign(k, digest, nil)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)
 	}
@@ -680,6 +720,41 @@ func TestVerifySuccForRSAPKCS1V15(t *testing.T) {
 	}
 }
 
+func TestVerifySuccForSM2(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM2KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SHA256Opts{})
+	if err != nil {
+		t.Fatalf("Hash failed %v", err)
+	}
+
+	signature, err := csp.Sign(k, digest, nil)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
+	if err != nil {
+		t.Fatalf("Get public key failed: %v", err)
+	}
+
+	valid, err := csp.Verify(pubKey, digest, signature, nil)
+	if err != nil {
+		t.Fatalf("Verify failed: %v", err)
+	}
+	if !valid {
+		t.Fatalf("The signature should be validated")
+	}
+}
 func TestAddWrapperWithTypeIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
