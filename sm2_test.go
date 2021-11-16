@@ -1,6 +1,9 @@
 package cryptolib
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestSm2KeyGenerator(t *testing.T) {
 	kg := &sm2KeyGenerator{}
@@ -71,5 +74,49 @@ func TestSm2Verifier(t *testing.T) {
 	}
 	if !valid {
 		t.Fatalf("The signature should be validated")
+	}
+}
+
+func TestSm2Encrypter(t *testing.T) {
+	kg := &sm2KeyGenerator{}
+	encrypter := &sm2Encrypter{}
+
+	k, err := kg.KeyGen(&SM2KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("hello, world")
+	pubKey, _ := k.PublicKey()
+	_, err = encrypter.Encrypt(pubKey, plaintext, nil)
+	if err != nil {
+		t.Fatalf("SM2 encrypting failed: %v", err)
+	}
+}
+
+func TestSm2Decrypter(t *testing.T) {
+	kg := &sm2KeyGenerator{}
+	encrypter := &sm2Encrypter{}
+	decrypter := &sm2Decrypter{}
+
+	k, err := kg.KeyGen(&SM2KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("hello, world")
+	pubKey, _ := k.PublicKey()
+	cipher, err := encrypter.Encrypt(pubKey, plaintext, nil)
+	if err != nil {
+		t.Fatalf("SM2 encrypting failed: %v", err)
+	}
+
+	result, err := decrypter.Decrypt(k, cipher, nil)
+	if err != nil {
+		t.Fatalf("SM2 decrypting failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
 	}
 }

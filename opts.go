@@ -55,6 +55,7 @@ func (opts *ED25519KeyGenOpts) Algorithm() string {
 }
 
 // ECDSAKeyGenOpts contains options for ECDSA key generation.
+// Curve can be elliptic.P224(), elliptic.P256(), elliptic.P384(), elliptic.P521().
 type ECDSAKeyGenOpts struct {
 	Curve elliptic.Curve
 }
@@ -65,6 +66,8 @@ func (opts *ECDSAKeyGenOpts) Algorithm() string {
 }
 
 // RSAKeyGenOpts contains options for RSA key generation.
+// Notice that Bits is the key length in bits, it can only be
+// 1024 or 2048 or 3072 or 4096.
 type RSAKeyGenOpts struct {
 	Bits int
 }

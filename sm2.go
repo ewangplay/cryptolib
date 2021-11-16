@@ -146,3 +146,53 @@ func (sm *sm2Verifier) Verify(k Key, digest, signature []byte, opts SignatureOpt
 	valid = sm2.Sm2Verify(sm2PubKey, digest, nil, r, s)
 	return valid, nil
 }
+
+type sm2Encrypter struct{}
+
+// Encrypt encrypts plaintext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (sm *sm2Encrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("SM2 encrypting error: %v", e)
+		}
+	}()
+
+	pubKeyBytes, err := k.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	sm2PubKey, err := x509.ParseSm2PublicKey(pubKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext, err = sm2.EncryptAsn1(sm2PubKey, plaintext, rand.Reader)
+
+	return
+}
+
+type sm2Decrypter struct{}
+
+// Decrypt decrypts ciphertext using key k.
+// The opts argument should be appropriate for the algorithm used.
+func (sm *sm2Decrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("SM2 decrypting error: %v", e)
+		}
+	}()
+
+	priKeyBytes, err := k.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	sm2PriKey, err := x509.ParseSm2PrivateKey(priKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	plaintext, err = sm2.DecryptAsn1(sm2PriKey, ciphertext)
+
+	return
+}
