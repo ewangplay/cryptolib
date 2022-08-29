@@ -38,6 +38,9 @@ const (
 	// SHA512 hash algorithm
 	SHA512 = "SHA512"
 
+	// SM3 hash algorithm
+	SM3 = "SM3"
+
 	// AES Advanced Encryption Standard
 	AES = "AES"
 
@@ -123,6 +126,15 @@ type SHA512Opts struct {
 // Algorithm returns the hash algorithm identifier (to be used).
 func (opts *SHA512Opts) Algorithm() string {
 	return SHA512
+}
+
+// SM3Opts contains options relating to SM3
+type SM3Opts struct {
+}
+
+// Algorithm returns the hash algorithm identifier (to be used).
+func (opts *SM3Opts) Algorithm() string {
+	return SM3
 }
 
 // RSASignatureOpts contains options relating to PSS signing algorithm.

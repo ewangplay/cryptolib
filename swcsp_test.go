@@ -967,6 +967,25 @@ func ExampleHash_sha512() {
 	// 2958f052052ce5c280fc1dcf97038c4f4bf36ca5bde0531567201b391d977db699c379b4d31c8b3dd75a407114104aecb84f8ca11cad67b33d865dd47a72dec3
 }
 
+func ExampleHash_sm3() {
+	csp, err := NewSWCSP()
+	if err != nil {
+		fmt.Printf("NewSWCSP failed: %v\n", err)
+		return
+	}
+
+	msg := []byte("hello,world")
+	digest, err := csp.Hash(msg, &SM3Opts{})
+	if err != nil {
+		fmt.Printf("Hash failed %v\n", err)
+		return
+	}
+
+	fmt.Println(hex.EncodeToString(digest))
+	// Output:
+	// 72456cdb868a49b85123d6093c15f31c75ac698c466d33d7dc312122f5887d3f
+}
+
 func TestEncryptAndDecryptForECIES(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {

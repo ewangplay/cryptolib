@@ -4,14 +4,13 @@ A common cryptographical library in Golang.
 
 ## Feature
 
-* SHA2-256 / SHA2-384 / SHA2-512 hash algorithm.
+* SHA2-256 / SHA2-384 / SHA2-512 / SM3 hash algorithm.
 * Ed25519 / ECDSA / RSA / SM2 key generating.
 * Ed25519 / ECDSA / RSA / SM2 signature algorithm.
 * ECIES / RSA / SM2 encryption algorithm.
 * AES symmetric encryption algorithm.
 
 ## TODO
-* SM3: 国密hash算法库
 * SM4: 国密分组密码算法库
 
 ## Usage

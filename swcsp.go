@@ -5,6 +5,8 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"reflect"
+
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 // SWCSP provides a software-based implementation of the CSP interface.
@@ -237,6 +239,7 @@ func initSWCSP(csp *SWCSP) error {
 	csp.AddWrapper(reflect.TypeOf(&SHA256Opts{}), &hasher{hash: sha256.New})
 	csp.AddWrapper(reflect.TypeOf(&SHA384Opts{}), &hasher{hash: sha512.New384})
 	csp.AddWrapper(reflect.TypeOf(&SHA512Opts{}), &hasher{hash: sha512.New})
+	csp.AddWrapper(reflect.TypeOf(&SM3Opts{}), &hasher{hash: sm3.New})
 
 	// Set the Encrypters
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &eciesEncrypter{})
