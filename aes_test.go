@@ -66,7 +66,7 @@ func TestAesEncrypter(t *testing.T) {
 	}
 
 	plaintext := []byte("this is a test string. hello,world.")
-	_, err = et.Encrypt(k, plaintext, &AESCBCPKCS7ModeOpts{})
+	_, err = et.Encrypt(k, plaintext, &AESCBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
@@ -83,12 +83,12 @@ func TestAesDecrypter(t *testing.T) {
 	}
 
 	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := et.Encrypt(k, plaintext, &AESCBCPKCS7ModeOpts{})
+	ciphertext, err := et.Encrypt(k, plaintext, &AESCBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	result, err := dt.Decrypt(k, ciphertext, &AESCBCPKCS7ModeOpts{})
+	result, err := dt.Decrypt(k, ciphertext, &AESCBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}

@@ -46,6 +46,9 @@ const (
 
 	// SM2 国密椭圆曲线算法
 	SM2 = "SM2"
+
+	// SM4 国密分组密码算法
+	SM4 = "SM4"
 )
 
 // ED25519KeyGenOpts contains options for ED25519 key generation.
@@ -99,6 +102,15 @@ type SM2KeyGenOpts struct {
 // Algorithm returns the key generation algorithm identifier for SM2.
 func (opts *SM2KeyGenOpts) Algorithm() string {
 	return SM2
+}
+
+// SM4KeyGenOpts contains options for SM4 key generation.
+type SM4KeyGenOpts struct {
+}
+
+// Algorithm returns the key generation algorithm identifier for SM4.
+func (opts *SM4KeyGenOpts) Algorithm() string {
+	return SM4
 }
 
 // SHA256Opts contains options relating to SHA-256.
@@ -168,12 +180,12 @@ func (opts *RSAEnciphermentOpts) Algorithm() string {
 	return RSA
 }
 
-// AESCBCPKCS7ModeOpts contains options for AES encryption in CBC mode
+// AESCBCPKCS7PaddingOpts contains options for AES encryption in CBC mode
 // with PKCS7 padding.
 //  1. Both IV and PRNG can be nil. In that case, the implementation
-// is supposed to sample the IV using a cryptographic secure PRNG.
+//     is supposed to sample the IV using a cryptographic secure PRNG.
 //  2. Either IV or PRNG can be different from nil.
-type AESCBCPKCS7ModeOpts struct {
+type AESCBCPKCS7PaddingOpts struct {
 	// IV is the initialization vector to be used by the underlying cipher.
 	// The length of IV must be the same as the Block's block size.
 	// It is used only if different from nil.
@@ -184,6 +196,26 @@ type AESCBCPKCS7ModeOpts struct {
 }
 
 // Algorithm returns the AES algorithm identifier (to be used).
-func (opts *AESCBCPKCS7ModeOpts) Algorithm() string {
+func (opts *AESCBCPKCS7PaddingOpts) Algorithm() string {
 	return AES
+}
+
+// SM4CBCPKCS7PaddingOpts contains options for SM4 encryption in CBC mode
+// with PKCS7 padding.
+//  1. Both IV and PRNG can be nil. In that case, the implementation
+//     is supposed to sample the IV using a cryptographic secure PRNG.
+//  2. Either IV or PRNG can be different from nil.
+type SM4CBCPKCS7PaddingOpts struct {
+	// IV is the initialization vector to be used by the underlying cipher.
+	// The length of IV must be the same as the Block's block size.
+	// It is used only if different from nil.
+	IV []byte
+	// PRNG is an instance of a PRNG to be used by the underlying cipher.
+	// It is used only if different from nil.
+	PRNG io.Reader
+}
+
+// Algorithm returns the SM4 algorithm identifier (to be used).
+func (opts *SM4CBCPKCS7PaddingOpts) Algorithm() string {
+	return SM4
 }

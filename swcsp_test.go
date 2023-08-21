@@ -149,7 +149,7 @@ func TestKeyGenSuccForAES(t *testing.T) {
 	}
 
 	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&aesPrivateKey{}) {
+	if typeOf != reflect.TypeOf(&aesKey{}) {
 		t.Fatalf("Key returned by KeyGen should be aesPrivateKey type")
 	}
 }
@@ -1122,12 +1122,12 @@ func TestEncryptAndDecryptForAESCBCPKCS7Mode(t *testing.T) {
 	}
 
 	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &AESCBCPKCS7ModeOpts{})
+	ciphertext, err := csp.Encrypt(k, plaintext, &AESCBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	result, err := csp.Decrypt(k, ciphertext, &AESCBCPKCS7ModeOpts{})
+	result, err := csp.Decrypt(k, ciphertext, &AESCBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
@@ -1159,6 +1159,32 @@ func TestEncryptAndDecryptForSM2(t *testing.T) {
 	}
 
 	result, err := csp.Decrypt(k, cihper, nil)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestEncryptAndDecryptForSM4CBCPKCS7Mode(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+	ciphertext, err := csp.Encrypt(k, plaintext, &SM4CBCPKCS7PaddingOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := csp.Decrypt(k, ciphertext, &SM4CBCPKCS7PaddingOpts{})
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}

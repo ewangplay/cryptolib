@@ -222,6 +222,7 @@ func initSWCSP(csp *SWCSP) error {
 	csp.AddWrapper(reflect.TypeOf(&RSAKeyGenOpts{}), &rsaKeyGenerator{})
 	csp.AddWrapper(reflect.TypeOf(&AESKeyGenOpts{}), &aesKeyGenerator{})
 	csp.AddWrapper(reflect.TypeOf(&SM2KeyGenOpts{}), &sm2KeyGenerator{})
+	csp.AddWrapper(reflect.TypeOf(&SM4KeyGenOpts{}), &sm4KeyGenerator{})
 
 	// Set the Signers
 	csp.AddWrapper(reflect.TypeOf(&Ed25519PrivateKey{}), &ed25519Signer{})
@@ -244,14 +245,16 @@ func initSWCSP(csp *SWCSP) error {
 	// Set the Encrypters
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPublicKey{}), &eciesEncrypter{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPublicKey{}), &rsaEncrypter{})
-	csp.AddWrapper(reflect.TypeOf(&aesPrivateKey{}), &aesEncrypter{})
 	csp.AddWrapper(reflect.TypeOf(&sm2PublicKey{}), &sm2Encrypter{})
+	csp.AddWrapper(reflect.TypeOf(&aesKey{}), &aesEncrypter{})
+	csp.AddWrapper(reflect.TypeOf(&sm4Key{}), &sm4Encrypter{})
 
 	// Set the Decrypters
 	csp.AddWrapper(reflect.TypeOf(&EcdsaPrivateKey{}), &eciesDecrypter{})
 	csp.AddWrapper(reflect.TypeOf(&RsaPrivateKey{}), &rsaDecrypter{})
-	csp.AddWrapper(reflect.TypeOf(&aesPrivateKey{}), &aesDecrypter{})
 	csp.AddWrapper(reflect.TypeOf(&sm2PrivateKey{}), &sm2Decrypter{})
+	csp.AddWrapper(reflect.TypeOf(&aesKey{}), &aesDecrypter{})
+	csp.AddWrapper(reflect.TypeOf(&sm4Key{}), &sm4Decrypter{})
 
 	return nil
 }
