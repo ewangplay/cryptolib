@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	cc "github.com/ewangplay/crypto/cipher"
 	"github.com/ewangplay/crypto/padding"
 	"github.com/ewangplay/crypto/sm4"
 )
@@ -132,6 +133,39 @@ func sm4CBCPKCS7EncryptWithIV(IV []byte, key, src []byte) ([]byte, error) {
 	return sm4CBCEncryptWithIV(IV, key, tmp)
 }
 
+// sm4ECBEncryptWithIV performs SM4 ECB encryption.
+func sm4ECBEncrypt(key, src []byte) ([]byte, error) {
+	// ECB mode works on blocks so plaintexts may need to be padded to the
+	// next whole block. For an example of such padding, see
+	// https://tools.ietf.org/html/rfc5246#section-6.2.3.2. Here we'll
+	// assume that the plaintext is already of the correct length.
+	if len(src)%sm4.BlockSize != 0 {
+		return nil, errors.New("Invalid plaintext. It must be a multiple of the block size")
+	}
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	mode := cc.NewECBEncrypter(block)
+	mode.CryptBlocks(dst, src)
+
+	return dst, nil
+}
+
+// sm4ECBPKCS7Encrypt combines ECB encryption and PKCS7 padding.
+func sm4ECBPKCS7Encrypt(key, src []byte) ([]byte, error) {
+	padding := padding.NewPkcs7Padding(sm4.BlockSize)
+	tmp, err := padding.Pad(src)
+	if err != nil {
+		return nil, err
+	}
+	return sm4ECBEncrypt(key, tmp)
+}
+
 type sm4Encrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -152,6 +186,10 @@ func (en *sm4Encrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return sm4CBCPKCS7EncryptWithRand(o.PRNG, k.(*sm4Key).key, plaintext)
 		}
 		return sm4CBCPKCS7Encrypt(k.(*sm4Key).key, plaintext)
+
+	case *SM4ECBPKCS7PaddingOpts:
+		return sm4ECBPKCS7Encrypt(k.(*sm4Key).key, plaintext)
+
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
 	}
@@ -196,6 +234,37 @@ func sm4CBCPKCS7Decrypt(key, src []byte) ([]byte, error) {
 	return padding.UnPad(pt)
 }
 
+// sm4ECBDecrypt performs SM4 ECB decryption.
+func sm4ECBDecrypt(key, src []byte) ([]byte, error) {
+	// ECB mode always works in whole blocks.
+	if len(src)%sm4.BlockSize != 0 {
+		return nil, errors.New("Invalid ciphertext. It must be a multiple of the block size")
+	}
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+	mode := cc.NewECBDecrypter(block)
+	mode.CryptBlocks(dst, src)
+
+	return dst, nil
+}
+
+// sm4ECBPKCS7Decrypt combines ECB decryption and PKCS7 unpadding.
+func sm4ECBPKCS7Decrypt(key, src []byte) ([]byte, error) {
+	// First decrypt
+	pt, err := sm4ECBDecrypt(key, src)
+	if err != nil {
+		return nil, err
+	}
+	// Then unpadding
+	padding := padding.NewPkcs7Padding(sm4.BlockSize)
+	return padding.UnPad(pt)
+}
+
 type sm4Decrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -205,6 +274,9 @@ func (en *sm4Decrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *SM4CBCPKCS7PaddingOpts:
 		// SM4 in CBC mode with PKCS7 padding
 		return sm4CBCPKCS7Decrypt(k.(*sm4Key).key, ciphertext)
+	case *SM4ECBPKCS7PaddingOpts:
+		// SM4 in ECB mode with PKCS7 padding
+		return sm4ECBPKCS7Decrypt(k.(*sm4Key).key, ciphertext)
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
 	}

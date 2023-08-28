@@ -219,3 +219,12 @@ type SM4CBCPKCS7PaddingOpts struct {
 func (opts *SM4CBCPKCS7PaddingOpts) Algorithm() string {
 	return SM4
 }
+
+// SM4ECBPKCS7PaddingOpts contains options for SM4 encryption in ECB mode
+// with PKCS7 padding.
+type SM4ECBPKCS7PaddingOpts struct{}
+
+// Algorithm returns the SM4 algorithm identifier (to be used).
+func (opts *SM4ECBPKCS7PaddingOpts) Algorithm() string {
+	return SM4
+}
