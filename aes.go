@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 
+	cc "github.com/ewangplay/crypto/cipher"
 	"github.com/ewangplay/crypto/padding"
 )
 
@@ -159,6 +160,39 @@ func aesCBCPKCS7EncryptWithIV(IV []byte, key, src []byte) ([]byte, error) {
 	return aesCBCEncryptWithIV(IV, key, tmp)
 }
 
+// aesECBEncrypt performs AES ECB encryption.
+func aesECBEncrypt(key, s []byte) ([]byte, error) {
+	// ECB mode works on blocks so plaintexts may need to be padded to the
+	// next whole block. For an example of such padding, see
+	// https://tools.ietf.org/html/rfc5246#section-6.2.3.2. Here we'll
+	// assume that the plaintext is already of the correct length.
+	if len(s)%aes.BlockSize != 0 {
+		return nil, errors.New("Invalid plaintext. It must be a multiple of the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := make([]byte, len(s))
+
+	mode := cc.NewECBEncrypter(block)
+	mode.CryptBlocks(ciphertext, s)
+
+	return ciphertext, nil
+}
+
+// aesECBPKCS7Encrypt combines ECB encryption and PKCS7 padding.
+func aesECBPKCS7Encrypt(key, src []byte) ([]byte, error) {
+	padding := padding.NewPkcs7Padding(aes.BlockSize)
+	tmp, err := padding.Pad(src)
+	if err != nil {
+		return nil, err
+	}
+	return aesECBEncrypt(key, tmp)
+}
+
 type aesEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -179,6 +213,10 @@ func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return aesCBCPKCS7EncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
 		}
 		return aesCBCPKCS7Encrypt(k.(*aesKey).key, plaintext)
+
+	case *AESECBPKCS7PaddingOpts:
+		return aesECBPKCS7Encrypt(k.(*aesKey).key, plaintext)
+
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
 	}
@@ -224,6 +262,39 @@ func aesCBCPKCS7Decrypt(key, src []byte) ([]byte, error) {
 	return padding.UnPad(pt)
 }
 
+// aesECBDecrypt performs SM4 ECB decryption.
+func aesECBDecrypt(key, src []byte) ([]byte, error) {
+	// ECB mode always works in whole blocks.
+	if len(src)%aes.BlockSize != 0 {
+		return nil, errors.New("Invalid ciphertext. It must be a multiple of the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	mode := cc.NewECBDecrypter(block)
+	mode.CryptBlocks(dst, src)
+
+	return dst, nil
+}
+
+// aesECBPKCS7Decrypt combines ECB decryption and PKCS7 unpadding.
+func aesECBPKCS7Decrypt(key, src []byte) ([]byte, error) {
+	// First decrypt
+	pt, err := aesECBDecrypt(key, src)
+	if err != nil {
+		return nil, err
+	}
+
+	// Then unpadding
+	padding := padding.NewPkcs7Padding(aes.BlockSize)
+	return padding.UnPad(pt)
+}
+
 type aesDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -233,6 +304,11 @@ func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *AESCBCPKCS7PaddingOpts:
 		// AES in CBC mode with PKCS7 padding
 		return aesCBCPKCS7Decrypt(k.(*aesKey).key, ciphertext)
+
+	case *AESECBPKCS7PaddingOpts:
+		// AES in ECB mode with PKCS7 padding
+		return aesECBPKCS7Decrypt(k.(*aesKey).key, ciphertext)
+
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
 	}

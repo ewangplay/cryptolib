@@ -200,6 +200,15 @@ func (opts *AESCBCPKCS7PaddingOpts) Algorithm() string {
 	return AES
 }
 
+// AESECBPKCS7PaddingOpts contains options for AES encryption in ECB mode
+// with PKCS7 padding.
+type AESECBPKCS7PaddingOpts struct{}
+
+// Algorithm returns the AES algorithm identifier (to be used).
+func (opts *AESECBPKCS7PaddingOpts) Algorithm() string {
+	return AES
+}
+
 // SM4CBCPKCS7PaddingOpts contains options for SM4 encryption in CBC mode
 // with PKCS7 padding.
 //  1. Both IV and PRNG can be nil. In that case, the implementation
