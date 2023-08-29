@@ -193,6 +193,43 @@ func aesECBPKCS7Encrypt(key, src []byte) ([]byte, error) {
 	return aesECBEncrypt(key, tmp)
 }
 
+// aesCFBEncrypt performs AES CFB encryption.
+func aesCFBEncrypt(key, s []byte) ([]byte, error) {
+	return aesCFBEncryptWithRand(rand.Reader, key, s)
+}
+
+// aesCFBEncryptWithRand performs AES CFB encryption using the passed prng.
+func aesCFBEncryptWithRand(prng io.Reader, key, s []byte) ([]byte, error) {
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(prng, iv); err != nil {
+		return nil, err
+	}
+	return aesCFBEncryptWithIV(iv, key, s)
+}
+
+// aesCFBEncryptWithIV performs AES CFB encryption using the IV.
+func aesCFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
+	// The IV's length must be equal to Block size.
+	if len(IV) != aes.BlockSize {
+		return nil, errors.New("Invalid IV. It must have length the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(s))
+	copy(ciphertext[:aes.BlockSize], IV)
+
+	stream := cipher.NewCFBEncrypter(block, IV)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], s)
+
+	return ciphertext, nil
+}
+
 type aesEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -200,16 +237,13 @@ type aesEncrypter struct{}
 func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) (ciphertext []byte, err error) {
 	switch o := opts.(type) {
 	case *AESCBCPKCS7PaddingOpts:
-		// AES in CBC mode with PKCS7 padding
 		if len(o.IV) != 0 && o.PRNG != nil {
 			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
 		}
 
 		if len(o.IV) != 0 {
-			// Encrypt with the passed IV
 			return aesCBCPKCS7EncryptWithIV(o.IV, k.(*aesKey).key, plaintext)
 		} else if o.PRNG != nil {
-			// Encrypt with PRNG
 			return aesCBCPKCS7EncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
 		}
 		return aesCBCPKCS7Encrypt(k.(*aesKey).key, plaintext)
@@ -217,12 +251,24 @@ func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 	case *AESECBPKCS7PaddingOpts:
 		return aesECBPKCS7Encrypt(k.(*aesKey).key, plaintext)
 
+	case *AESCFBModeOpts:
+		if len(o.IV) != 0 && o.PRNG != nil {
+			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
+		}
+
+		if len(o.IV) != 0 {
+			return aesCFBEncryptWithIV(o.IV, k.(*aesKey).key, plaintext)
+		} else if o.PRNG != nil {
+			return aesCFBEncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
+		}
+		return aesCFBEncrypt(k.(*aesKey).key, plaintext)
+
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
 	}
 }
 
-// aesCBCDecrypt performs SM4 CBC decryption.
+// aesCBCDecrypt performs AES CBC decryption.
 func aesCBCDecrypt(key, src []byte) ([]byte, error) {
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
@@ -262,7 +308,7 @@ func aesCBCPKCS7Decrypt(key, src []byte) ([]byte, error) {
 	return padding.UnPad(pt)
 }
 
-// aesECBDecrypt performs SM4 ECB decryption.
+// aesECBDecrypt performs AES ECB decryption.
 func aesECBDecrypt(key, src []byte) ([]byte, error) {
 	// ECB mode always works in whole blocks.
 	if len(src)%aes.BlockSize != 0 {
@@ -295,6 +341,30 @@ func aesECBPKCS7Decrypt(key, src []byte) ([]byte, error) {
 	return padding.UnPad(pt)
 }
 
+// aesCFBDecrypt performs AES CFB decryption.
+func aesCFBDecrypt(key, src []byte) ([]byte, error) {
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(src) < aes.BlockSize {
+		return nil, errors.New("Invalid ciphertext. It must be larger size than the block size")
+	}
+
+	iv := src[:aes.BlockSize]
+	src = src[aes.BlockSize:]
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(dst, src)
+
+	return dst, nil
+}
+
 type aesDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -308,6 +378,10 @@ func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *AESECBPKCS7PaddingOpts:
 		// AES in ECB mode with PKCS7 padding
 		return aesECBPKCS7Decrypt(k.(*aesKey).key, ciphertext)
+
+	case *AESCFBModeOpts:
+		// AES in CFB mode
+		return aesCFBDecrypt(k.(*aesKey).key, ciphertext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)

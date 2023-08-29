@@ -274,3 +274,126 @@ func BenchmarkAesECB(t *testing.B) {
 		}
 	}
 }
+
+func TestAesEncryptCFB(t *testing.T) {
+	kg := &aesKeyGenerator{}
+	et := &aesEncrypter{}
+
+	k, err := kg.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	key, _ := k.Bytes()
+	fmt.Printf("Key: %s\n", hex.EncodeToString(key))
+
+	plaintext := []byte("this is a test string. hello,world.")
+	ciphertext, err := et.Encrypt(k, plaintext, &AESCFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+}
+
+func TestAesEncryptCFBWithIV(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	iv, _ := hex.DecodeString("cc8212ab1322a5d17ac9023ed0950b00")
+	plaintext := []byte("this is a test string. hello,world.")
+
+	k := &aesKey{key}
+	et := &aesEncrypter{}
+
+	ciphertext, err := et.Encrypt(k, plaintext, &AESCFBModeOpts{IV: iv})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+	// Output: cc8212ab1322a5d17ac9023ed0950b00e63198dc6740622867acde421e87e220caf99817a2bd49d2228f46b156f42180221874
+}
+
+func TestAesEncryptCFBWithPRNG(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	plaintext := []byte("this is a test string. hello,world.")
+
+	k := &aesKey{key}
+	et := &aesEncrypter{}
+
+	ciphertext, err := et.Encrypt(k, plaintext, &AESCFBModeOpts{PRNG: rand.Reader})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+}
+
+func TestAesDecryptCFB(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	plaintext := []byte("this is a test string. hello,world.")
+	ciphertext, _ := hex.DecodeString("cc8212ab1322a5d17ac9023ed0950b00e63198dc6740622867acde421e87e220caf99817a2bd49d2228f46b156f42180221874")
+
+	k := &aesKey{key}
+	dt := &aesDecrypter{}
+
+	result, err := dt.Decrypt(k, ciphertext, &AESCFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestAesCFB(t *testing.T) {
+	kg := &aesKeyGenerator{}
+	et := &aesEncrypter{}
+	dt := &aesDecrypter{}
+
+	k, err := kg.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+	ciphertext, err := et.Encrypt(k, plaintext, &AESCFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := dt.Decrypt(k, ciphertext, &AESCFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func BenchmarkAesCFB(t *testing.B) {
+	kg := &aesKeyGenerator{}
+	et := &aesEncrypter{}
+	dt := &aesDecrypter{}
+
+	k, err := kg.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+
+	for i := 0; i < t.N; i++ {
+		ciphertext, err := et.Encrypt(k, plaintext, &AESCFBModeOpts{})
+		if err != nil {
+			t.Fatalf("Encrypt failed: %v", err)
+		}
+
+		result, err := dt.Decrypt(k, ciphertext, &AESCFBModeOpts{})
+		if err != nil {
+			t.Fatalf("Decrypt failed: %v", err)
+		}
+
+		if bytes.Compare(plaintext, result) != 0 {
+			t.Fatalf("The original text should be equal to the decrypted text")
+		}
+	}
+}
