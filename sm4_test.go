@@ -240,3 +240,126 @@ func BenchmarkSm4ECB(t *testing.B) {
 		}
 	}
 }
+
+func TestSm4EncryptCFB(t *testing.T) {
+	kg := &sm4KeyGenerator{}
+	et := &sm4Encrypter{}
+
+	k, err := kg.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	key, _ := k.Bytes()
+	fmt.Printf("Key: %s\n", hex.EncodeToString(key))
+
+	plaintext := []byte("this is a test string. hello,world.")
+	ciphertext, err := et.Encrypt(k, plaintext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+}
+
+func TestSm4EncryptCFBWithIV(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	iv, _ := hex.DecodeString("cc8212ab1322a5d17ac9023ed0950b00")
+	plaintext := []byte("this is a test string. hello,world.")
+
+	k := &sm4Key{key}
+	et := &sm4Encrypter{}
+
+	ciphertext, err := et.Encrypt(k, plaintext, &SM4CFBModeOpts{IV: iv})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+	// Output: cc8212ab1322a5d17ac9023ed0950b009e6987b7ecc347448e1f051a696c47c82e6e80480208ddddeb541fd391f4ee1b1f0457
+}
+
+func TestSm4EncryptCFBWithPRNG(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	plaintext := []byte("this is a test string. hello,world.")
+
+	k := &sm4Key{key}
+	et := &sm4Encrypter{}
+
+	ciphertext, err := et.Encrypt(k, plaintext, &SM4CFBModeOpts{PRNG: rand.Reader})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+}
+
+func TestSm4DecryptCFB(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	plaintext := []byte("this is a test string. hello,world.")
+	ciphertext, _ := hex.DecodeString("cc8212ab1322a5d17ac9023ed0950b009e6987b7ecc347448e1f051a696c47c82e6e80480208ddddeb541fd391f4ee1b1f0457")
+
+	k := &sm4Key{key}
+	dt := &sm4Decrypter{}
+
+	result, err := dt.Decrypt(k, ciphertext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestSm4CFB(t *testing.T) {
+	kg := &sm4KeyGenerator{}
+	et := &sm4Encrypter{}
+	dt := &sm4Decrypter{}
+
+	k, err := kg.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+	ciphertext, err := et.Encrypt(k, plaintext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := dt.Decrypt(k, ciphertext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func BenchmarkSm4CFB(t *testing.B) {
+	kg := &sm4KeyGenerator{}
+	et := &sm4Encrypter{}
+	dt := &sm4Decrypter{}
+
+	k, err := kg.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+
+	for i := 0; i < t.N; i++ {
+		ciphertext, err := et.Encrypt(k, plaintext, &SM4CFBModeOpts{})
+		if err != nil {
+			t.Fatalf("Encrypt failed: %v", err)
+		}
+
+		result, err := dt.Decrypt(k, ciphertext, &SM4CFBModeOpts{})
+		if err != nil {
+			t.Fatalf("Decrypt failed: %v", err)
+		}
+
+		if bytes.Compare(plaintext, result) != 0 {
+			t.Fatalf("The original text should be equal to the decrypted text")
+		}
+	}
+}

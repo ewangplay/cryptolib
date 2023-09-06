@@ -166,6 +166,43 @@ func sm4ECBPKCS7Encrypt(key, src []byte) ([]byte, error) {
 	return sm4ECBEncrypt(key, tmp)
 }
 
+// sm4CFBEncrypt performs SM4 CFB encryption.
+func sm4CFBEncrypt(key, s []byte) ([]byte, error) {
+	return sm4CFBEncryptWithRand(rand.Reader, key, s)
+}
+
+// sm4CFBEncryptWithRand performs SM4 CFB encryption using the passed prng.
+func sm4CFBEncryptWithRand(prng io.Reader, key, s []byte) ([]byte, error) {
+	iv := make([]byte, sm4.BlockSize)
+	if _, err := io.ReadFull(prng, iv); err != nil {
+		return nil, err
+	}
+	return sm4CFBEncryptWithIV(iv, key, s)
+}
+
+// sm4CFBEncryptWithIV performs SM4 CFB encryption using the IV.
+func sm4CFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
+	// The IV's length must be equal to Block size.
+	if len(IV) != sm4.BlockSize {
+		return nil, errors.New("Invalid IV. It must have length the block size")
+	}
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, sm4.BlockSize+len(s))
+	copy(ciphertext[:sm4.BlockSize], IV)
+
+	stream := cipher.NewCFBEncrypter(block, IV)
+	stream.XORKeyStream(ciphertext[sm4.BlockSize:], s)
+
+	return ciphertext, nil
+}
+
 type sm4Encrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -189,6 +226,18 @@ func (en *sm4Encrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 
 	case *SM4ECBPKCS7PaddingOpts:
 		return sm4ECBPKCS7Encrypt(k.(*sm4Key).key, plaintext)
+
+	case *SM4CFBModeOpts:
+		if len(o.IV) != 0 && o.PRNG != nil {
+			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
+		}
+
+		if len(o.IV) != 0 {
+			return sm4CFBEncryptWithIV(o.IV, k.(*sm4Key).key, plaintext)
+		} else if o.PRNG != nil {
+			return sm4CFBEncryptWithRand(o.PRNG, k.(*sm4Key).key, plaintext)
+		}
+		return sm4CFBEncrypt(k.(*sm4Key).key, plaintext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
@@ -265,6 +314,30 @@ func sm4ECBPKCS7Decrypt(key, src []byte) ([]byte, error) {
 	return padding.UnPad(pt)
 }
 
+// sm4CFBDecrypt performs SM4 CFB decryption.
+func sm4CFBDecrypt(key, src []byte) ([]byte, error) {
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(src) < sm4.BlockSize {
+		return nil, errors.New("Invalid ciphertext. It must be larger size than the block size")
+	}
+
+	iv := src[:sm4.BlockSize]
+	src = src[sm4.BlockSize:]
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(dst, src)
+
+	return dst, nil
+}
+
 type sm4Decrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -277,6 +350,9 @@ func (en *sm4Decrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *SM4ECBPKCS7PaddingOpts:
 		// SM4 in ECB mode with PKCS7 padding
 		return sm4ECBPKCS7Decrypt(k.(*sm4Key).key, ciphertext)
+	case *SM4CFBModeOpts:
+		// SM4 in CFB mode
+		return sm4CFBDecrypt(k.(*sm4Key).key, ciphertext)
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
 	}
