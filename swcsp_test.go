@@ -69,108 +69,6 @@ func TestKeyGenFailed(t *testing.T) {
 	errShouldContain(t, err, "failed generating key with opts")
 }
 
-func TestKeyGenSuccForED25519(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ED25519KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&Ed25519PrivateKey{}) {
-		t.Fatalf("Key returned by KeyGen should be Ed25519PrivateKey type")
-	}
-}
-
-func TestKeyGenSuccForECDSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ECDSAKeyGenOpts{Curve: elliptic.P521()})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&EcdsaPrivateKey{}) {
-		t.Fatalf("Key returned by KeyGen should be EcdsaPrivateKey type")
-	}
-}
-
-func TestKeyGenSuccForRSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&RsaPrivateKey{}) {
-		t.Fatalf("Key returned by KeyGen should be RsaPrivateKey type")
-	}
-}
-
-func TestKeyGenSuccForRSABits(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&RsaPrivateKey{}) {
-		t.Fatalf("Key returned by KeyGen should be RsaPrivateKey type")
-	}
-}
-
-func TestKeyGenSuccForAES(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&AESKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&aesKey{}) {
-		t.Fatalf("Key returned by KeyGen should be aesPrivateKey type")
-	}
-}
-
-func TestKeyGenSuccForSM2(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM2KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	typeOf := reflect.TypeOf(k)
-	if typeOf != reflect.TypeOf(&sm2PrivateKey{}) {
-		t.Fatalf("Key returned by KeyGen should be sm2PrivateKey type")
-	}
-}
-
 func TestSignWithKeyIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
@@ -279,132 +177,6 @@ func TestSignFailed(t *testing.T) {
 	}
 
 	errShouldContain(t, err, "failed signing")
-}
-
-func TestSignSuccForED25519(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ED25519KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	_, err = csp.Sign(k, []byte("hello,world"), nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-}
-
-func TestSignSuccForECDSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	_, err = csp.Sign(k, []byte("hello,world"), nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-}
-
-func TestSignSuccForRSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA256Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	_, err = csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-}
-
-func TestSignSuccForRSAPSS(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA384Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	_, err = csp.Sign(k, digest, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-}
-
-func TestSignSuccForRSAPKCS1V15(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA512Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	_, err = csp.Sign(k, digest, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-}
-
-func TestSignSuccForSM2(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM2KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("Key generating failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA256Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	_, err = csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
 }
 
 func TestVerifyWithKeyIsNil(t *testing.T) {
@@ -550,211 +322,6 @@ func TestVerifyFailed(t *testing.T) {
 	errShouldContain(t, err, "failed verifing")
 }
 
-func TestVerifySuccForED25519(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ED25519KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	digest := []byte("hello,world")
-	signature, err := csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, nil)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
-
-func TestVerifySuccForECDSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	digest := []byte("hello,world")
-	signature, err := csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, nil)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
-
-func TestVerifySuccForRSA(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA256Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	signature, err := csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, nil)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
-
-func TestVerifySuccForRSAPSS(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA384Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	signature, err := csp.Sign(k, digest, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384})
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
-
-func TestVerifySuccForRSAPKCS1V15(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA512Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	signature, err := csp.Sign(k, digest, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512})
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
-
-func TestVerifySuccForSM2(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM2KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	msg := []byte("hello,world")
-	digest, err := csp.Hash(msg, &SHA256Opts{})
-	if err != nil {
-		t.Fatalf("Hash failed %v", err)
-	}
-
-	signature, err := csp.Sign(k, digest, nil)
-	if err != nil {
-		t.Fatalf("Sign failed: %v", err)
-	}
-
-	pubKey, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	valid, err := csp.Verify(pubKey, digest, signature, nil)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-	if !valid {
-		t.Fatalf("The signature should be validated")
-	}
-}
 func TestAddWrapperWithTypeIsNil(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
@@ -986,365 +553,307 @@ func ExampleHash_sm3() {
 	// 72456cdb868a49b85123d6093c15f31c75ac698c466d33d7dc312122f5887d3f
 }
 
-func TestEncryptAndDecryptForECIES(t *testing.T) {
+type signAndVerifyOpts struct {
+	KeyGenOpsts KeyGenOpts
+	HashOpts    HashOpts
+	SignOpts    SignatureOpts
+	VerifyOpts  SignatureOpts
+}
+
+var signatureOpts = []*signAndVerifyOpts{
+	{
+		KeyGenOpsts: &ED25519KeyGenOpts{},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{Curve: elliptic.P224()},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{Curve: elliptic.P256()},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{Curve: elliptic.P384()},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{Curve: elliptic.P521()},
+		HashOpts:    nil,
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 1024},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 2048},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 3072},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 4096},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA256},
+		VerifyOpts:  &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA256},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA384Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384},
+		VerifyOpts:  &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA384},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA512Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA512},
+		VerifyOpts:  &RSASignatureOpts{Schema: PSS, Hash: crypto.SHA512},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA256},
+		VerifyOpts:  &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA256},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA384Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA384},
+		VerifyOpts:  &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA384},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		HashOpts:    &SHA512Opts{},
+		SignOpts:    &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512},
+		VerifyOpts:  &RSASignatureOpts{Schema: PKCS1V15, Hash: crypto.SHA512},
+	},
+	{
+		KeyGenOpsts: &SM2KeyGenOpts{},
+		HashOpts:    &SHA256Opts{},
+		SignOpts:    nil,
+		VerifyOpts:  nil,
+	},
+}
+
+func TestSignAndVerify(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
 	}
 
-	k, err := csp.KeyGen(&ECDSAKeyGenOpts{})
+	msg := []byte("hello,world")
+	for _, opts := range signatureOpts {
+		signAndVerify(t, csp, opts, msg)
+	}
+}
+
+func signAndVerify(t *testing.T, csp CSP, opts *signAndVerifyOpts, msg []byte) {
+
+	k, err := csp.KeyGen(opts.KeyGenOpsts)
 	if err != nil {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 
-	pk, err := k.PublicKey()
+	var digest []byte
+	if opts.HashOpts != nil {
+		digest, err = csp.Hash(msg, opts.HashOpts)
+		if err != nil {
+			t.Fatalf("Hash failed %v", err)
+		}
+	} else {
+		digest = msg
+	}
+
+	signature, err := csp.Sign(k, digest, opts.SignOpts)
+	if err != nil {
+		t.Fatalf("Sign failed: %v", err)
+	}
+
+	pubKey, err := k.PublicKey()
 	if err != nil {
 		t.Fatalf("Get public key failed: %v", err)
 	}
 
-	plaintext := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, plaintext, nil)
+	valid, err := csp.Verify(pubKey, digest, signature, opts.VerifyOpts)
 	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
+		t.Fatalf("Verify failed: %v", err)
 	}
-
-	result, err := csp.Decrypt(k, cihper, nil)
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
+	if !valid {
+		t.Fatalf("The signature should be validated")
 	}
 }
 
-func TestEncryptAndDecryptForRSA(t *testing.T) {
+type encryptAndDecryptOpts struct {
+	KeyGenOpsts KeyGenOpts
+	EcnryptOpts EnciphermentOpts
+	DecryptOpts EnciphermentOpts
+}
+
+var encryptionOpts = []*encryptAndDecryptOpts{
+	{
+		KeyGenOpsts: &ECDSAKeyGenOpts{},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 1024},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 2048},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 3072},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{Bits: 4096},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		EcnryptOpts: &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"},
+		DecryptOpts: &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"},
+	},
+	{
+		KeyGenOpsts: &RSAKeyGenOpts{},
+		EcnryptOpts: &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()},
+		DecryptOpts: &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()},
+	},
+	{
+		KeyGenOpsts: &SM2KeyGenOpts{},
+		EcnryptOpts: nil,
+		DecryptOpts: nil,
+	},
+	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESCBCPKCS7PaddingOpts{},
+		DecryptOpts: &AESCBCPKCS7PaddingOpts{},
+	},
+	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESECBPKCS7PaddingOpts{},
+		DecryptOpts: &AESECBPKCS7PaddingOpts{},
+	},
+	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESCFBModeOpts{},
+		DecryptOpts: &AESCFBModeOpts{},
+	},
+	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESOFBModeOpts{},
+		DecryptOpts: &AESOFBModeOpts{},
+	},
+	{
+		KeyGenOpsts: &SM4KeyGenOpts{},
+		EcnryptOpts: &SM4CBCPKCS7PaddingOpts{},
+		DecryptOpts: &SM4CBCPKCS7PaddingOpts{},
+	},
+	{
+		KeyGenOpsts: &SM4KeyGenOpts{},
+		EcnryptOpts: &SM4ECBPKCS7PaddingOpts{},
+		DecryptOpts: &SM4ECBPKCS7PaddingOpts{},
+	},
+	{
+		KeyGenOpsts: &SM4KeyGenOpts{},
+		EcnryptOpts: &SM4CFBModeOpts{},
+		DecryptOpts: &SM4CFBModeOpts{},
+	},
+	{
+		KeyGenOpsts: &SM4KeyGenOpts{},
+		EcnryptOpts: &SM4OFBModeOpts{},
+		DecryptOpts: &SM4OFBModeOpts{},
+	},
+}
+
+func TestEncryptAndDecrypt(t *testing.T) {
 	csp, err := NewSWCSP()
 	if err != nil {
 		t.Fatalf("NewSWCSP failed: %v", err)
 	}
 
-	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	pk, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	plaintext := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, plaintext, nil)
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, cihper, nil)
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
+	plaintext := []byte("this is a test string. hello,world.")
+	for _, opts := range encryptionOpts {
+		result := encryptAndDecrypt(t, csp, opts, plaintext)
+		if bytes.Compare(plaintext, result) != 0 {
+			t.Fatalf("The original text should be equal to the decrypted text")
+		}
 	}
 }
 
-func TestEncryptAndDecryptForRSAOAEP(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
+func encryptAndDecrypt(t *testing.T, csp CSP, opts *encryptAndDecryptOpts, plaintext []byte) []byte {
 
-	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
+	k, err := csp.KeyGen(opts.KeyGenOpsts)
 	if err != nil {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 
-	pk, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
+	var pk Key
+	if k.Symmetric() {
+		pk = k
+	} else {
+		pk, err = k.PublicKey()
+		if err != nil {
+			t.Fatalf("Get public key failed: %v", err)
+		}
 	}
 
-	plaintext := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, plaintext, &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"})
+	cihpertext, err := csp.Encrypt(pk, plaintext, opts.EcnryptOpts)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	result, err := csp.Decrypt(k, cihper, &RSAEnciphermentOpts{Schema: OAEP, Hash: sha256.New224(), Label: "test01"})
+	result, err := csp.Decrypt(k, cihpertext, opts.DecryptOpts)
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
 
-func TestEncryptAndDecryptForRSAPKCS1V15(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&RSAKeyGenOpts{Bits: 1024})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	pk, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	plaintext := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, plaintext, &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, cihper, &RSAEnciphermentOpts{Schema: PKCS1V15, Hash: sha256.New()})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForAESCBCPKCS7(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&AESKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &AESCBCPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &AESCBCPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForAESECBPKCS7(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&AESKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &AESECBPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &AESECBPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForAESCFB(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&AESKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &AESCFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &AESCFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForAESOFB(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&AESKeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &AESOFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &AESOFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForSM2(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM2KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	pk, err := k.PublicKey()
-	if err != nil {
-		t.Fatalf("Get public key failed: %v", err)
-	}
-
-	plaintext := []byte("hello,world")
-	cihper, err := csp.Encrypt(pk, plaintext, nil)
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, cihper, nil)
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForSM4CBCPKCS7(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM4KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &SM4CBCPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &SM4CBCPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForSM4ECBPKCS7(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM4KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &SM4ECBPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &SM4ECBPKCS7PaddingOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForSM4CFB(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM4KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &SM4CFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &SM4CFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
-}
-
-func TestEncryptAndDecryptForSM4OFB(t *testing.T) {
-	csp, err := NewSWCSP()
-	if err != nil {
-		t.Fatalf("NewSWCSP failed: %v", err)
-	}
-
-	k, err := csp.KeyGen(&SM4KeyGenOpts{})
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
-	ciphertext, err := csp.Encrypt(k, plaintext, &SM4OFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
-	}
-
-	result, err := csp.Decrypt(k, ciphertext, &SM4OFBModeOpts{})
-	if err != nil {
-		t.Fatalf("Decrypt failed: %v", err)
-	}
-	if bytes.Compare(plaintext, result) != 0 {
-		t.Fatalf("The original text should be equal to the decrypted text")
-	}
+	return result
 }

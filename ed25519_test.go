@@ -3,6 +3,7 @@ package cryptolib
 import (
 	"bytes"
 	"crypto/ed25519"
+	"reflect"
 	"testing"
 )
 
@@ -98,6 +99,11 @@ func TestEd25519KeyGenerator(t *testing.T) {
 
 	if !k.Private() {
 		t.Fatalf("k should be private key")
+	}
+
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&Ed25519PrivateKey{}) {
+		t.Fatalf("k should be Ed25519PrivateKey type")
 	}
 }
 

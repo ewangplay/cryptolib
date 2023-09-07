@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -23,6 +24,10 @@ func TestAesKeyGen(t *testing.T) {
 	if !k.Private() {
 		t.Fatalf("k should be private key")
 	}
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&aesKey{}) {
+		t.Fatalf("k should be aesPrivateKey type")
+	}
 }
 
 func TestAes24LenKeyGen(t *testing.T) {
@@ -40,6 +45,10 @@ func TestAes24LenKeyGen(t *testing.T) {
 	if !k.Private() {
 		t.Fatalf("k should be private key")
 	}
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&aesKey{}) {
+		t.Fatalf("k should be aesPrivateKey type")
+	}
 }
 
 func TestAes32LenKeyGen(t *testing.T) {
@@ -56,6 +65,10 @@ func TestAes32LenKeyGen(t *testing.T) {
 	}
 	if !k.Private() {
 		t.Fatalf("k should be private key")
+	}
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&aesKey{}) {
+		t.Fatalf("k should be aesPrivateKey type")
 	}
 }
 

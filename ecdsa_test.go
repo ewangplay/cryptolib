@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"reflect"
 	"testing"
 )
 
@@ -79,6 +80,10 @@ func TestEcdsaKeyGenerator(t *testing.T) {
 	if !k.Private() {
 		t.Fatalf("k should be private key")
 	}
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&EcdsaPrivateKey{}) {
+		t.Fatalf("k should be EcdsaPrivateKey type")
+	}
 
 	opts := &ECDSAKeyGenOpts{Curve: elliptic.P384()}
 	k, err = kg.KeyGen(opts)
@@ -94,7 +99,10 @@ func TestEcdsaKeyGenerator(t *testing.T) {
 	if !k.Private() {
 		t.Fatalf("k should be private key")
 	}
-
+	typeOf = reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&EcdsaPrivateKey{}) {
+		t.Fatalf("k should be EcdsaPrivateKey type")
+	}
 }
 
 func TestEcdsaSigner(t *testing.T) {

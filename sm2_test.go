@@ -2,6 +2,7 @@ package cryptolib
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -20,18 +21,27 @@ func TestSm2KeyGenerator(t *testing.T) {
 	if !k.Private() {
 		t.Fatalf("k should be private key")
 	}
+	typeOf := reflect.TypeOf(k)
+	if typeOf != reflect.TypeOf(&sm2PrivateKey{}) {
+		t.Fatalf("k should be sm2PrivateKey type")
+	}
+
 	pk, err := k.PublicKey()
 	if err != nil {
 		t.Fatalf("Get PublicKey failed: %v", err)
 	}
 	if pk.Type() != SM2 {
-		t.Fatalf("k should be SM2 key")
+		t.Fatalf("pk should be SM2 key")
 	}
 	if pk.Symmetric() {
-		t.Fatalf("k should not be symmetric key")
+		t.Fatalf("pk should not be symmetric key")
 	}
 	if pk.Private() {
 		t.Fatalf("pk should not be private key")
+	}
+	typeOf = reflect.TypeOf(pk)
+	if typeOf != reflect.TypeOf(&sm2PublicKey{}) {
+		t.Fatalf("pk should be sm2PublicKey type")
 	}
 }
 
