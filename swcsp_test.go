@@ -1296,3 +1296,55 @@ func TestEncryptAndDecryptForSM4ECBPKCS7(t *testing.T) {
 		t.Fatalf("The original text should be equal to the decrypted text")
 	}
 }
+
+func TestEncryptAndDecryptForSM4CFB(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+	ciphertext, err := csp.Encrypt(k, plaintext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := csp.Decrypt(k, ciphertext, &SM4CFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestEncryptAndDecryptForSM4OFB(t *testing.T) {
+	csp, err := NewSWCSP()
+	if err != nil {
+		t.Fatalf("NewSWCSP failed: %v", err)
+	}
+
+	k, err := csp.KeyGen(&SM4KeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+	ciphertext, err := csp.Encrypt(k, plaintext, &SM4OFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := csp.Decrypt(k, ciphertext, &SM4OFBModeOpts{})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}

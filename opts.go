@@ -294,3 +294,22 @@ type SM4CFBModeOpts struct {
 func (opts *SM4CFBModeOpts) Algorithm() string {
 	return SM4
 }
+
+// SM4OFBModeOpts contains options for SM4 encryption in OFB mode.
+//  1. Both IV and PRNG can be nil. In that case, the implementation
+//     is supposed to sample the IV using a cryptographic secure PRNG.
+//  2. Either IV or PRNG can be different from nil.
+type SM4OFBModeOpts struct {
+	// IV is the initialization vector to be used by the underlying cipher.
+	// The length of IV must be the same as the Block's block size.
+	// It is used only if different from nil.
+	IV []byte
+	// PRNG is an instance of a PRNG to be used by the underlying cipher.
+	// It is used only if different from nil.
+	PRNG io.Reader
+}
+
+// Algorithm returns the SM4 algorithm identifier (to be used).
+func (opts *SM4OFBModeOpts) Algorithm() string {
+	return SM4
+}

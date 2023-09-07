@@ -203,6 +203,43 @@ func sm4CFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// sm4OFBEncrypt performs SM4 OFB encryption.
+func sm4OFBEncrypt(key, s []byte) ([]byte, error) {
+	return sm4OFBEncryptWithRand(rand.Reader, key, s)
+}
+
+// sm4OFBEncryptWithRand performs SM4 OFB encryption using the passed prng.
+func sm4OFBEncryptWithRand(prng io.Reader, key, s []byte) ([]byte, error) {
+	iv := make([]byte, sm4.BlockSize)
+	if _, err := io.ReadFull(prng, iv); err != nil {
+		return nil, err
+	}
+	return sm4OFBEncryptWithIV(iv, key, s)
+}
+
+// sm4OFBEncryptWithIV performs SM4 OFB encryption using the IV.
+func sm4OFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
+	// The IV's length must be equal to Block size.
+	if len(IV) != sm4.BlockSize {
+		return nil, errors.New("Invalid IV. It must have length the block size")
+	}
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, sm4.BlockSize+len(s))
+	copy(ciphertext[:sm4.BlockSize], IV)
+
+	stream := cipher.NewOFB(block, IV)
+	stream.XORKeyStream(ciphertext[sm4.BlockSize:], s)
+
+	return ciphertext, nil
+}
+
 type sm4Encrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -238,6 +275,18 @@ func (en *sm4Encrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return sm4CFBEncryptWithRand(o.PRNG, k.(*sm4Key).key, plaintext)
 		}
 		return sm4CFBEncrypt(k.(*sm4Key).key, plaintext)
+
+	case *SM4OFBModeOpts:
+		if len(o.IV) != 0 && o.PRNG != nil {
+			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
+		}
+
+		if len(o.IV) != 0 {
+			return sm4OFBEncryptWithIV(o.IV, k.(*sm4Key).key, plaintext)
+		} else if o.PRNG != nil {
+			return sm4OFBEncryptWithRand(o.PRNG, k.(*sm4Key).key, plaintext)
+		}
+		return sm4OFBEncrypt(k.(*sm4Key).key, plaintext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
@@ -338,6 +387,30 @@ func sm4CFBDecrypt(key, src []byte) ([]byte, error) {
 	return dst, nil
 }
 
+// sm4OFBDecrypt performs SM4 OFB decryption.
+func sm4OFBDecrypt(key, src []byte) ([]byte, error) {
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(src) < sm4.BlockSize {
+		return nil, errors.New("Invalid ciphertext. It must be larger size than the block size")
+	}
+
+	iv := src[:sm4.BlockSize]
+	src = src[sm4.BlockSize:]
+
+	block, err := sm4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	stream := cipher.NewOFB(block, iv)
+	stream.XORKeyStream(dst, src)
+
+	return dst, nil
+}
+
 type sm4Decrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -353,6 +426,9 @@ func (en *sm4Decrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *SM4CFBModeOpts:
 		// SM4 in CFB mode
 		return sm4CFBDecrypt(k.(*sm4Key).key, ciphertext)
+	case *SM4OFBModeOpts:
+		// SM4 in OFB mode
+		return sm4OFBDecrypt(k.(*sm4Key).key, ciphertext)
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
 	}
