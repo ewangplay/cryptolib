@@ -230,6 +230,43 @@ func aesCFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// aesOFBEncrypt performs AES OFB encryption.
+func aesOFBEncrypt(key, s []byte) ([]byte, error) {
+	return aesOFBEncryptWithRand(rand.Reader, key, s)
+}
+
+// aesOFBEncryptWithRand performs AES OFB encryption using the passed prng.
+func aesOFBEncryptWithRand(prng io.Reader, key, s []byte) ([]byte, error) {
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(prng, iv); err != nil {
+		return nil, err
+	}
+	return aesOFBEncryptWithIV(iv, key, s)
+}
+
+// aesOFBEncryptWithIV performs AES OFB encryption using the IV.
+func aesOFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
+	// The IV's length must be equal to Block size.
+	if len(IV) != aes.BlockSize {
+		return nil, errors.New("Invalid IV. It must have length the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(s))
+	copy(ciphertext[:aes.BlockSize], IV)
+
+	stream := cipher.NewOFB(block, IV)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], s)
+
+	return ciphertext, nil
+}
+
 type aesEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -262,6 +299,18 @@ func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return aesCFBEncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
 		}
 		return aesCFBEncrypt(k.(*aesKey).key, plaintext)
+
+	case *AESOFBModeOpts:
+		if len(o.IV) != 0 && o.PRNG != nil {
+			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
+		}
+
+		if len(o.IV) != 0 {
+			return aesOFBEncryptWithIV(o.IV, k.(*aesKey).key, plaintext)
+		} else if o.PRNG != nil {
+			return aesOFBEncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
+		}
+		return aesOFBEncrypt(k.(*aesKey).key, plaintext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
@@ -365,6 +414,30 @@ func aesCFBDecrypt(key, src []byte) ([]byte, error) {
 	return dst, nil
 }
 
+// aesOFBDecrypt performs AES OFB decryption.
+func aesOFBDecrypt(key, src []byte) ([]byte, error) {
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(src) < aes.BlockSize {
+		return nil, errors.New("Invalid ciphertext. It must be larger size than the block size")
+	}
+
+	iv := src[:aes.BlockSize]
+	src = src[aes.BlockSize:]
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	stream := cipher.NewOFB(block, iv)
+	stream.XORKeyStream(dst, src)
+
+	return dst, nil
+}
+
 type aesDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -382,6 +455,10 @@ func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *AESCFBModeOpts:
 		// AES in CFB mode
 		return aesCFBDecrypt(k.(*aesKey).key, ciphertext)
+
+	case *AESOFBModeOpts:
+		// AES in OFB mode
+		return aesOFBDecrypt(k.(*aesKey).key, ciphertext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
