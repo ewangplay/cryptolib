@@ -792,6 +792,11 @@ var encryptionOpts = []*encryptAndDecryptOpts{
 		DecryptOpts: &AESOFBModeOpts{},
 	},
 	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESCTRModeOpts{},
+		DecryptOpts: &AESCTRModeOpts{},
+	},
+	{
 		KeyGenOpsts: &SM4KeyGenOpts{},
 		EcnryptOpts: &SM4CBCPKCS7PaddingOpts{},
 		DecryptOpts: &SM4CBCPKCS7PaddingOpts{},

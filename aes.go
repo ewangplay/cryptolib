@@ -267,6 +267,43 @@ func aesOFBEncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// aesCTREncrypt performs AES CTR encryption.
+func aesCTREncrypt(key, s []byte) ([]byte, error) {
+	return aesCTREncryptWithRand(rand.Reader, key, s)
+}
+
+// aesCTREncryptWithRand performs AES CTR encryption using the passed prng.
+func aesCTREncryptWithRand(prng io.Reader, key, s []byte) ([]byte, error) {
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(prng, iv); err != nil {
+		return nil, err
+	}
+	return aesCTREncryptWithIV(iv, key, s)
+}
+
+// aesCTREncryptWithIV performs AES CTR encryption using the IV.
+func aesCTREncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
+	// The IV's length must be equal to Block size.
+	if len(IV) != aes.BlockSize {
+		return nil, errors.New("Invalid IV. It must have length the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(s))
+	copy(ciphertext[:aes.BlockSize], IV)
+
+	stream := cipher.NewCTR(block, IV)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], s)
+
+	return ciphertext, nil
+}
+
 type aesEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -311,6 +348,18 @@ func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return aesOFBEncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
 		}
 		return aesOFBEncrypt(k.(*aesKey).key, plaintext)
+
+	case *AESCTRModeOpts:
+		if len(o.IV) != 0 && o.PRNG != nil {
+			return nil, errors.New("Invalid options. Either IV or PRNG should be different from nil, or both nil.")
+		}
+
+		if len(o.IV) != 0 {
+			return aesCTREncryptWithIV(o.IV, k.(*aesKey).key, plaintext)
+		} else if o.PRNG != nil {
+			return aesCTREncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
+		}
+		return aesCTREncrypt(k.(*aesKey).key, plaintext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
@@ -438,6 +487,30 @@ func aesOFBDecrypt(key, src []byte) ([]byte, error) {
 	return dst, nil
 }
 
+// aesCTRDecrypt performs AES CTR decryption.
+func aesCTRDecrypt(key, src []byte) ([]byte, error) {
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(src) < aes.BlockSize {
+		return nil, errors.New("Invalid ciphertext. It must be larger size than the block size")
+	}
+
+	iv := src[:aes.BlockSize]
+	src = src[aes.BlockSize:]
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	dst := make([]byte, len(src))
+
+	stream := cipher.NewCTR(block, iv)
+	stream.XORKeyStream(dst, src)
+
+	return dst, nil
+}
+
 type aesDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
@@ -459,6 +532,10 @@ func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *AESOFBModeOpts:
 		// AES in OFB mode
 		return aesOFBDecrypt(k.(*aesKey).key, ciphertext)
+
+	case *AESCTRModeOpts:
+		// AES in CTR mode
+		return aesCTRDecrypt(k.(*aesKey).key, ciphertext)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)

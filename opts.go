@@ -247,6 +247,25 @@ func (opts *AESOFBModeOpts) Algorithm() string {
 	return AES
 }
 
+// AESCTRModeOpts contains options for AES encryption in CTR mode.
+//  1. Both IV and PRNG can be nil. In that case, the implementation
+//     is supposed to sample the IV using a cryptographic secure PRNG.
+//  2. Either IV or PRNG can be different from nil.
+type AESCTRModeOpts struct {
+	// IV is the initialization vector to be used by the underlying cipher.
+	// The length of IV must be the same as the Block's block size.
+	// It is used only if different from nil.
+	IV []byte
+	// PRNG is an instance of a PRNG to be used by the underlying cipher.
+	// It is used only if different from nil.
+	PRNG io.Reader
+}
+
+// Algorithm returns the AES algorithm identifier (to be used).
+func (opts *AESCTRModeOpts) Algorithm() string {
+	return AES
+}
+
 // SM4CBCPKCS7PaddingOpts contains options for SM4 encryption in CBC mode
 // with PKCS7 padding.
 //  1. Both IV and PRNG can be nil. In that case, the implementation
