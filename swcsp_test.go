@@ -816,6 +816,11 @@ var encryptionOpts = []*encryptAndDecryptOpts{
 		EcnryptOpts: &SM4OFBModeOpts{},
 		DecryptOpts: &SM4OFBModeOpts{},
 	},
+	{
+		KeyGenOpsts: &SM4KeyGenOpts{},
+		EcnryptOpts: &SM4CTRModeOpts{},
+		DecryptOpts: &SM4CTRModeOpts{},
+	},
 }
 
 func TestEncryptAndDecrypt(t *testing.T) {
