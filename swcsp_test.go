@@ -797,6 +797,16 @@ var encryptionOpts = []*encryptAndDecryptOpts{
 		DecryptOpts: &AESCTRModeOpts{},
 	},
 	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESGCMModeOpts{Nonce: []byte("cc8212ab1322")},
+		DecryptOpts: &AESGCMModeOpts{Nonce: []byte("cc8212ab1322")},
+	},
+	{
+		KeyGenOpsts: &AESKeyGenOpts{},
+		EcnryptOpts: &AESGCMModeOpts{Nonce: []byte("cc8212ab1322"), AdditionalData: []byte("hello,kitty!")},
+		DecryptOpts: &AESGCMModeOpts{Nonce: []byte("cc8212ab1322"), AdditionalData: []byte("hello,kitty!")},
+	},
+	{
 		KeyGenOpsts: &SM4KeyGenOpts{},
 		EcnryptOpts: &SM4CBCPKCS7PaddingOpts{},
 		DecryptOpts: &SM4CBCPKCS7PaddingOpts{},

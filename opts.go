@@ -266,6 +266,18 @@ func (opts *AESCTRModeOpts) Algorithm() string {
 	return AES
 }
 
+// AESGCMModeOpts contains options for AES encryption in GCM mode.
+type AESGCMModeOpts struct {
+	Nonce []byte
+
+	AdditionalData []byte
+}
+
+// Algorithm returns the AES algorithm identifier (to be used).
+func (opts *AESGCMModeOpts) Algorithm() string {
+	return AES
+}
+
 // SM4CBCPKCS7PaddingOpts contains options for SM4 encryption in CBC mode
 // with PKCS7 padding.
 //  1. Both IV and PRNG can be nil. In that case, the implementation

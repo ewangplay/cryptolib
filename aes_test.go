@@ -656,3 +656,96 @@ func BenchmarkAesCTR(t *testing.B) {
 		}
 	}
 }
+
+func TestAesEncryptGCM(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	nonce, _ := hex.DecodeString("cc8212ab1322a5d17ac9023e")
+	plaintext := []byte("this is a test string. hello,world.")
+
+	k := &aesKey{key}
+	et := &aesEncrypter{}
+
+	ciphertext, err := et.Encrypt(k, plaintext, &AESGCMModeOpts{Nonce: nonce})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	fmt.Printf("Ciphertext: %s\n", hex.EncodeToString(ciphertext))
+	// Output: ed69228d05e0a166ba8062632ec43eb1de001eb166f85d06efa4661a34fdfb485552a4ba326ea4c564e74a509afbca7c034b14
+}
+
+func TestAesDecryptGCM(t *testing.T) {
+	key, _ := hex.DecodeString("189ddb371c528841e27fa6a9726dc214")
+	nonce, _ := hex.DecodeString("cc8212ab1322a5d17ac9023e")
+	plaintext := []byte("this is a test string. hello,world.")
+	ciphertext, _ := hex.DecodeString("ed69228d05e0a166ba8062632ec43eb1de001eb166f85d06efa4661a34fdfb485552a4ba326ea4c564e74a509afbca7c034b14")
+
+	k := &aesKey{key}
+	dt := &aesDecrypter{}
+
+	result, err := dt.Decrypt(k, ciphertext, &AESGCMModeOpts{Nonce: nonce})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func TestAesGCM(t *testing.T) {
+	kg := &aesKeyGenerator{}
+	et := &aesEncrypter{}
+	dt := &aesDecrypter{}
+
+	k, err := kg.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	nonce, _ := hex.DecodeString("cc8212ab1322a5d17ac9023e")
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+
+	ciphertext, err := et.Encrypt(k, plaintext, &AESGCMModeOpts{Nonce: nonce})
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	result, err := dt.Decrypt(k, ciphertext, &AESGCMModeOpts{Nonce: nonce})
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if bytes.Compare(plaintext, result) != 0 {
+		t.Fatalf("The original text should be equal to the decrypted text")
+	}
+}
+
+func BenchmarkAesGCM(t *testing.B) {
+	kg := &aesKeyGenerator{}
+	et := &aesEncrypter{}
+	dt := &aesDecrypter{}
+
+	k, err := kg.KeyGen(&AESKeyGenOpts{})
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	nonce, _ := hex.DecodeString("cc8212ab1322a5d17ac9023e")
+	plaintext := []byte("when we are happy, we are always good, but when we are good, we are not always happy.")
+
+	for i := 0; i < t.N; i++ {
+		ciphertext, err := et.Encrypt(k, plaintext, &AESGCMModeOpts{Nonce: nonce})
+		if err != nil {
+			t.Fatalf("Encrypt failed: %v", err)
+		}
+
+		result, err := dt.Decrypt(k, ciphertext, &AESGCMModeOpts{Nonce: nonce})
+		if err != nil {
+			t.Fatalf("Decrypt failed: %v", err)
+		}
+
+		if bytes.Compare(plaintext, result) != 0 {
+			t.Fatalf("The original text should be equal to the decrypted text")
+		}
+	}
+}

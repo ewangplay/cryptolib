@@ -304,6 +304,27 @@ func aesCTREncryptWithIV(IV []byte, key, s []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// aesGCMEncrypt performs AES GCM encryption.
+func aesGCMEncrypt(key, plaintext, nonce, additionalData []byte) ([]byte, error) {
+	// The Nonce's length must be equal to 12
+	if len(nonce) != 12 {
+		return nil, errors.New("Invalid nonce. It must have length 12 size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := aead.Seal(nil, nonce, plaintext, additionalData)
+	return ciphertext, nil
+}
+
 type aesEncrypter struct{}
 
 // Encrypt encrypts plaintext using key k.
@@ -360,6 +381,12 @@ func (en *aesEncrypter) Encrypt(k Key, plaintext []byte, opts EnciphermentOpts) 
 			return aesCTREncryptWithRand(o.PRNG, k.(*aesKey).key, plaintext)
 		}
 		return aesCTREncrypt(k.(*aesKey).key, plaintext)
+
+	case *AESGCMModeOpts:
+		if len(o.Nonce) == 0 {
+			return nil, errors.New("Invalid nonce. The nonce lenght must be 12 size.")
+		}
+		return aesGCMEncrypt(k.(*aesKey).key, plaintext, o.Nonce, o.AdditionalData)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized: %v", opts)
@@ -511,12 +538,33 @@ func aesCTRDecrypt(key, src []byte) ([]byte, error) {
 	return dst, nil
 }
 
+// aesGCMDecrypt performs AES GCM decryption.
+func aesGCMDecrypt(key, ciphertext, nonce, additionalData []byte) ([]byte, error) {
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	dst, err := aead.Open(nil, nonce, ciphertext, additionalData)
+	if err != nil {
+		return nil, err
+	}
+
+	return dst, nil
+}
+
 type aesDecrypter struct{}
 
 // Decrypt decrypts ciphertext using key k.
 // The opts argument should be appropriate for the algorithm used.
 func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts) (plaintext []byte, err error) {
-	switch opts.(type) {
+	switch o := opts.(type) {
 	case *AESCBCPKCS7PaddingOpts:
 		// AES in CBC mode with PKCS7 padding
 		return aesCBCPKCS7Decrypt(k.(*aesKey).key, ciphertext)
@@ -536,6 +584,13 @@ func (en *aesDecrypter) Decrypt(k Key, ciphertext []byte, opts EnciphermentOpts)
 	case *AESCTRModeOpts:
 		// AES in CTR mode
 		return aesCTRDecrypt(k.(*aesKey).key, ciphertext)
+
+	case *AESGCMModeOpts:
+		// AES in GCM mode
+		if len(o.Nonce) == 0 {
+			return nil, errors.New("Invalid nonce. The nonce lenght must be 12 size.")
+		}
+		return aesGCMDecrypt(k.(*aesKey).key, ciphertext, o.Nonce, o.AdditionalData)
 
 	default:
 		return nil, fmt.Errorf("mode not recognized [%v]", opts)
